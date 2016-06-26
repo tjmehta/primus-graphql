@@ -1,0 +1,53 @@
+{
+  "name": "primus-graphql",
+  "version": "0.0.0",
+  "description": "Primus server and client plugins for GraphQL",
+  "main": "index.js",
+  "scripts": {
+    "build": "make build",
+    "test": "istanbul cover _mocha ./test && istanbul --text check-coverage --statements 100 --functions 100 --branches 100 --lines 100",
+    "test-browser": "make build-browser && karma start test-browser/karmaconf.js",
+    "test-watch": "nodemon -x mocha ./test",
+    "lint": "standard"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tjmehta/primus-graphql.git"
+  },
+  "keywords": [
+    "primus",
+    "graphql",
+    "server",
+    "client",
+    "query",
+    "relay"
+  ],
+  "author": "Tejesh Mehta",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tjmehta/primus-graphql/issues"
+  },
+  "homepage": "https://github.com/tjmehta/primus-graphql",
+  "devDependencies": {
+    "browserify": "^13.0.1",
+    "chai": "^3.5.0",
+    "code": "^1.5.0",
+    "istanbul": "^0.4.4",
+    "karma": "^1.0.0",
+    "karma-browserify": "^5.0.5",
+    "karma-chrome-launcher": "^1.0.1",
+    "karma-mocha": "^1.0.1",
+    "mocha": "^2.5.3",
+    "primus": "^5.2.2",
+    "proxyquire": "^1.7.9",
+    "shimmer": "^1.1.0",
+    "sinon": "^1.17.4"
+  },
+  "dependencies": {
+    "101": "^1.6.0",
+    "call-me-maybe": "^1.0.1",
+    "error-to-json": "^1.0.1",
+    "graphql": "^0.6.0",
+    "uuid": "^2.0.2"
+  }
+}
