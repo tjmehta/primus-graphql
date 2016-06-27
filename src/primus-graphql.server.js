@@ -1,6 +1,5 @@
 var assert = require('assert')
 
-var assign = require('101/assign')
 var errToJSON = require('error-to-json')
 var debug = require('debug')('primus-graphql:server')
 var defaults = require('101/defaults')
@@ -8,12 +7,16 @@ var isFunction = require('101/is-function')
 var graphql = require('graphql')
 
 var defaultOpts = require('./default-opts.js')
+var utils = require('./respond-utils.js')
 
 var execute = graphql.execute
 var parse = graphql.parse
 var Source = graphql.Source
 var specifiedRules = graphql.specifiedRules
 var validate = graphql.validate
+
+var respond = utils.respond
+var respondErrs = utils.respondErrs
 
 module.exports = createServerPlugin
 
@@ -34,6 +37,7 @@ function createServerPlugin (opts) {
     validationRules: []
   })
   return function serverPlugin (Primus, primusOpts) {
+    primusOpts = primusOpts || {}
     defaults(primusOpts, defaultOpts)
     var key = primusOpts.key
     Primus.Spark.prototype.graphql = function () {
@@ -71,18 +75,19 @@ function createServerPlugin (opts) {
             : opts.rootValue
         } catch (err) {
           debug('context or root err: ' + err)
-          return respondErrs(spark, id, 400, [ err ], opts)
+          return respondErrs(spark, id, 400, [ err ], opts, primusOpts)
         }
         // Parse query, reporting any errors.
         debug('parse query')
-        var source = new Source(query, 'GraphQL request')
+        var source
         var documentAST
         try {
+          source = new Source(query, 'GraphQL request')
           documentAST = parse(source)
         } catch (syntaxError) {
           // Respond 400: Bad Request if any syntax errors errors exist.
-          debug('query syntax err: ' + err)
-          return respondErrs(spark, id, 400, [ syntaxError ], opts)
+          debug('query syntax err: ' + syntaxError)
+          return respondErrs(spark, id, 400, [ syntaxError ], opts, primusOpts)
         }
         // Validate AST, reporting any errors.
         debug('validate')
@@ -90,53 +95,17 @@ function createServerPlugin (opts) {
         if (validationErrors.length > 0) {
           // Respond 400: Bad Request if any validation errors exist.
           debug('validation errs: ' + validationErrors)
-          return respondErrs(spark, id, 400, validationErrors, opts)
+          return respondErrs(spark, id, 400, validationErrors, opts, primusOpts)
         }
         // Perform the execution, reporting any errors creating the context.
         debug('execute')
         execute(opts.schema, documentAST, rootValue, context, variables, operationName)
           .then(function (payload) {
-            respond(spark, id, 200, payload)
+            respond(spark, id, 200, payload, opts, primusOpts)
           }).catch(function (err) {
-            respondErrs(spark, id, statusCode, [ err ], opts)
+            respondErrs(spark, id, 400, [ err ], opts, primusOpts)
           })
       }
-    }
-    /**
-     * respond to a graphql request
-     * @param  {Spark} spark
-     * @param  {String} id
-     * @param  {Integer} statusCode
-     * @param  {Object} payload response payload
-     */
-    function respond (spark, id, statusCode, data) {
-      debug('respond' + data)
-      var res = {}
-      res[key] = {
-        id: id,
-        statusCode: statusCode
-      }
-      assign(res[key], data)
-      spark.write(res)
-    }
-    /**
-     * respond to a graphql request w/ errors
-     * @param  {Spark} spark
-     * @param  {String} id
-     * @param  {Integer} statusCode
-     * @param  {Error} response error
-     * @param  {Object} options
-     */
-    function respondErrs (spark, id, statusCode, errors, opts) {
-      debug('respondErrs: ' + errors)
-      try {
-        errors = (opts.formatError)
-          ? errors.map(opts.formatError)
-          : errors
-      } catch (err) {
-        return respondErrs(spark, id, statusCode, [err])
-      }
-      respond(spark, id, statusCode, { errors: errors })
     }
   }
 }

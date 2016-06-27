@@ -13,6 +13,7 @@ var defaultOpts = require('./default-opts.js')
 
 var resEE = new EventEmitter()
 
+primusOpts = primusOpts || {}
 defaults(primusOpts, defaultOpts)
 var key = primusOpts.key
 
@@ -34,7 +35,7 @@ primus.graphql = function (query, vars, cb) {
   var data = {}
   data[key] = payload
   primus.write(data)
-  if (!~resEE.listeners('data').indexOf(handleData)) {
+  if (!~primus.listeners('data').indexOf(handleData)) {
     primus.on('data', handleData)
   }
   return maybe(cb, promise)

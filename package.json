@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "make build",
-    "test": "istanbul cover _mocha ./test && istanbul --text check-coverage --statements 100 --functions 100 --branches 100 --lines 100",
+    "test": "npm run test-unit && npm run test-browser",
+    "test-unit": "npm run build && istanbul cover _mocha ./test && istanbul --text check-coverage --statements 100 --functions 100 --branches 100 --lines 100",
     "test-browser": "make build-browser && karma start test-browser/karmaconf.js",
     "test-watch": "nodemon -x mocha ./test",
     "lint": "standard"
@@ -41,7 +42,8 @@
     "primus": "^5.2.2",
     "proxyquire": "^1.7.9",
     "shimmer": "^1.1.0",
-    "sinon": "^1.17.4"
+    "sinon": "^1.17.4",
+    "sinon-as-promised": "^4.0.0"
   },
   "dependencies": {
     "101": "^1.6.0",
