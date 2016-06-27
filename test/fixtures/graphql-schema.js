@@ -3,7 +3,6 @@ var GraphQL = require('graphql')
 var GraphQLSchema = GraphQL.GraphQLSchema
 var GraphQLString = GraphQL.GraphQLString
 var GraphQLObjectType = GraphQL.GraphQLObjectType
-console.log(GraphQLString)
 
 var UserType = new GraphQLObjectType({
   name: 'User',

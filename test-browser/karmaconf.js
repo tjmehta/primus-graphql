@@ -1,8 +1,6 @@
 // Karma configuration
 require('./fixtures/karma-primus.js')
 
-var url = require('url')
-
 var json = {
   // base path that will be used to resolve all patterns (eg. files, exclude)
   basePath: '',
@@ -65,7 +63,19 @@ var json = {
 
   // Concurrency level
   // how many browser should be started simultaneous
-  concurrency: Infinity
+  concurrency: Infinity,
+
+  // Travis
+  customLaunchers: {
+    Chrome_travis_ci: {
+      base: 'Chrome',
+      flags: ['--no-sandbox']
+    }
+  }
+}
+
+if (process.env.TRAVIS) {
+  json.browsers = ['Chrome_travis_ci']
 }
 
 module.exports = function (config) {
