@@ -34,4 +34,6 @@ node_modules
 
 # Build files
 lib
+test/fixtures/graphql-schema.json
+test/fixtures/graphql-schema.schema
 test-browser/fixtures/primus-client.js

@@ -44,121 +44,150 @@ describe('primus-graphql client', function () {
           }
         }
       })
-      this.primus.write = sinon.stub()
+      this.primus.write = sinon.stub().returns(true)
     })
 
-    it('should send a graphql payload (promise)', function () {
-      var key = defaultOpts.key
-      var query = 'query'
-      var vars = { foo: 1 }
-      this.primus.graphql(query, vars)
-      sinon.assert.calledOnce(this.primus.write)
-      var expected = {}
-      expected[key] = {
-        query: query,
-        variables: vars
-      }
-      var actual = this.primus.write.args[0][0]
-      expect(actual[key].id).to.match(/^[a-z0-9-]+$/)
-      expect(actual[key].query).to.equal(expected[key].query)
-      expect(actual[key].variables).to.equal(expected[key].variables)
-    })
-
-    describe('response', function () {
-      it('should receive a graphql payload response (promise)', function () {
-        var query = 'query'
-        var vars = { foo: 1 }
-        var promise = this.primus.graphql(query, vars)
-        var uuid = this.primus.write.args[0][0][defaultOpts.key].id
-        var res = {}
-        res[defaultOpts.key] = {
-          id: uuid,
-          data: {},
-          statusCode: 200
-        }
-        this.primus.emit('data', res)
-        sinon.assert.calledOnce(this.resEE.emit)
-        return promise.then(function (payload) {
-          expect(payload).to.deep.equal(res[defaultOpts.key])
-        })
+    describe('write error', function () {
+      beforeEach(function () {
+        this.primus.write.returns(false)
       })
 
-      it('should receive a graphql payload response (callback)', function (done) {
+      it('should send a graphql payload (promise)', function (done) {
+        var key = defaultOpts.key
         var query = 'query'
-        var vars = { foo: 1 }
-        var res = {}
-        this.primus.graphql(query, vars, function (err, payload) {
-          if (err) { return done(err) }
-          expect(payload).to.deep.equal(res[defaultOpts.key])
+        return this.primus.graphql(query, function (err) {
+          expect(err).to.exist()
+          expect(err.message).to.match(/write/)
+          sinon.assert.calledOnce(this.primus.write)
+          var expected = {}
+          expected[key] = {
+            query: query
+          }
+          var actual = this.primus.write.args[0][0]
+          expect(actual[key].id).to.match(/^[a-z0-9-]+$/)
+          expect(actual[key].query).to.equal(expected[key].query)
           done()
         })
-        var uuid = this.primus.write.args[0][0][defaultOpts.key].id
-        res[defaultOpts.key] = {
-          id: uuid,
-          data: {},
-          statusCode: 200
-        }
-        this.primus.emit('data', res)
+      })
+    })
+
+    describe('write success', function () {
+      beforeEach(function () {
+        this.primus.write.returns(true)
       })
 
-      describe('two', function () {
-        it('should not attach handler twice', function () {
+      it('should send a graphql payload (promise)', function () {
+        var key = defaultOpts.key
+        var query = 'query'
+        var vars = { foo: 1 }
+        this.primus.graphql(query, vars)
+        sinon.assert.calledOnce(this.primus.write)
+        var expected = {}
+        expected[key] = {
+          query: query,
+          variables: vars
+        }
+        var actual = this.primus.write.args[0][0]
+        expect(actual[key].id).to.match(/^[a-z0-9-]+$/)
+        expect(actual[key].query).to.equal(expected[key].query)
+        expect(actual[key].variables).to.equal(expected[key].variables)
+      })
+
+      describe('response', function () {
+        it('should receive a graphql payload response (promise)', function () {
           var query = 'query'
           var vars = { foo: 1 }
-          var key = defaultOpts.key
-          // res
           var promise = this.primus.graphql(query, vars)
-          var uuid = this.primus.write.args[0][0][key].id
+          var uuid = this.primus.write.args[0][0][defaultOpts.key].id
           var res = {}
-          res[key] = {
+          res[defaultOpts.key] = {
             id: uuid,
             data: {},
             statusCode: 200
           }
           this.primus.emit('data', res)
-          // res2
-          var promise2 = this.primus.graphql(query, vars)
-          var uuid2 = this.primus.write.args[1][0][key].id
-          var res2 = {}
-          res2[key] = {
-            id: uuid2,
-            data: {},
-            statusCode: 200
-          }
-          this.primus.emit('data', res2)
-          // sinon.assert.calledTwice(this.resEE.emit)
-          sinon.assert.calledOnce(this.primus.on)
-          return Promise.all([
-            promise.then(function (payload) {
-              expect(payload).to.deep.equal(res[key])
-            }),
-            promise2.then(function (payload) {
-              expect(payload).to.deep.equal(res2[key])
-            })
-          ])
-        });
-      })
-
-      describe('non-graphql payload', function () {
-        beforeEach(function () {
-          var query = 'query'
-          var vars = { foo: 1 }
-          var res = {}
-          var promise = this.primus.graphql(query, vars, function () {
-            throw new Error('should not happen')
+          sinon.assert.calledOnce(this.resEE.emit)
+          return promise.then(function (payload) {
+            expect(payload).to.deep.equal(res[defaultOpts.key])
           })
         })
 
-        it('should ignore', function() {
+        it('should receive a graphql payload response (callback)', function (done) {
+          var query = 'query'
+          var vars = { foo: 1 }
           var res = {}
-          res['non-graphql-data'] = {
-            id: 'foo'
+          this.primus.graphql(query, vars, function (err, payload) {
+            if (err) { return done(err) }
+            expect(payload).to.deep.equal(res[defaultOpts.key])
+            done()
+          })
+          var uuid = this.primus.write.args[0][0][defaultOpts.key].id
+          res[defaultOpts.key] = {
+            id: uuid,
+            data: {},
+            statusCode: 200
           }
           this.primus.emit('data', res)
-          sinon.assert.notCalled(this.resEE.emit)
         })
 
+        describe('two', function () {
+          it('should not attach handler twice', function () {
+            var query = 'query'
+            var vars = { foo: 1 }
+            var key = defaultOpts.key
+            // res
+            var promise = this.primus.graphql(query, vars)
+            var uuid = this.primus.write.args[0][0][key].id
+            var res = {}
+            res[key] = {
+              id: uuid,
+              data: {},
+              statusCode: 200
+            }
+            this.primus.emit('data', res)
+            // res2
+            var promise2 = this.primus.graphql(query, vars)
+            var uuid2 = this.primus.write.args[1][0][key].id
+            var res2 = {}
+            res2[key] = {
+              id: uuid2,
+              data: {},
+              statusCode: 200
+            }
+            this.primus.emit('data', res2)
+            // sinon.assert.calledTwice(this.resEE.emit)
+            sinon.assert.calledOnce(this.primus.on)
+            return Promise.all([
+              promise.then(function (payload) {
+                expect(payload).to.deep.equal(res[key])
+              }),
+              promise2.then(function (payload) {
+                expect(payload).to.deep.equal(res2[key])
+              })
+            ])
+          })
+        })
+
+        describe('non-graphql payload', function () {
+          beforeEach(function () {
+            var query = 'query'
+            var vars = { foo: 1 }
+            this.primus.graphql(query, vars, function () {
+              throw new Error('should not happen')
+            })
+          })
+
+          it('should ignore', function () {
+            var res = {}
+            res['non-graphql-data'] = {
+              id: 'foo'
+            }
+            this.primus.emit('data', res)
+            sinon.assert.notCalled(this.resEE.emit)
+          })
+        })
       })
     })
+
   })
 })

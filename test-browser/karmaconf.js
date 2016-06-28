@@ -1,5 +1,6 @@
 // Karma configuration
 require('./fixtures/karma-primus.js')
+var path = require('path')
 
 var json = {
   // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -37,7 +38,15 @@ var json = {
   },
 
   // browserify options
-  browserify: {},
+  browserify: {
+    debug: true,
+    transform: [
+      ['babelify', {
+        plugins: [path.join(__dirname, '/fixtures/babel-relay-plugin.js')],
+        presets: ['es2015', 'react']
+      }]
+    ]
+  },
 
   // test results reporter to use
   // possible values: 'dots', 'progress'

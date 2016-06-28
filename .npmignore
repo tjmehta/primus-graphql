@@ -33,4 +33,6 @@ node_modules
 .node_repl_history
 
 # Build files
+test/fixtures/graphql-schema.json
+test/fixtures/graphql-schema.schema
 test-browser/fixtures/primus-client.js

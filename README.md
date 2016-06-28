@@ -7,6 +7,7 @@ npm i --save primus-graphql
 ```
 
 # Usage
+### GraphQL Example
 Client Example:
 ```js
 
@@ -53,7 +54,6 @@ client.graphql(query, function (err, data) {
    */
 })
 ```
-
 Server Example:
 ```js
 var GraphQL = require('graphql')
@@ -107,6 +107,29 @@ primus.use('graphql', primusGraphQL({
 primus.on('connection', function (spark) {
   spark.graphql()
 })
+```
+
+### Relay Example
+```js
+var Relay = require('react-relay')
+var PrimusRelayNetworkAdapter = require('primus-graphql').PrimusRelayNetworkAdapter
+var primus = /* primus client */
+
+
+Relay.injectNetworkLayer(
+  new PrimusRelayNetworkAdapter(primus, {
+    // default options:
+    timeout: 15000,
+    retry: {
+      minTimeout: 1000,
+      maxTimeout: 3000,
+      factor: 3,
+      retries: 2
+    }
+  })
+)
+```
+
 ```
 
 # License

@@ -9,4 +9,5 @@ build:
 	rm ./lib/primus-graphql.client.js.tmp;
 build-browser:
 	make build && \
+	node ./scripts/build-graphql-schema.js && \
 	node ./scripts/build-primus-client.js
