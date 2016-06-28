@@ -21,7 +21,9 @@
     "server",
     "client",
     "query",
-    "relay"
+    "relay",
+    "socket",
+    "websocket"
   ],
   "author": "Tejesh Mehta",
   "license": "MIT",
