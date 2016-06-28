@@ -130,7 +130,5 @@ Relay.injectNetworkLayer(
 )
 ```
 
-```
-
 # License
 MIT
