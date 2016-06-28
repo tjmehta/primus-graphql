@@ -112,7 +112,7 @@ primus.on('connection', function (spark) {
 ### Relay Example
 ```js
 var Relay = require('react-relay')
-var PrimusRelayNetworkAdapter = require('primus-graphql').PrimusRelayNetworkAdapter
+var PrimusRelayNetworkAdapter = require('primus-graphql/relay-network-layer')
 var primus = /* primus client */
 
 
