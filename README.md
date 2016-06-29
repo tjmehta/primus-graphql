@@ -96,18 +96,52 @@ var schema = new GraphQLSchema({
 
 var primus = new Primus(server, {
   transport: /* transport */,
-  parser: 'json',
-  graphql: {}
+  parser: 'json'
 })
 
 primus.use('graphql', primusGraphQL({
-  schema: schema
+  // `schema` is required
+  schema: schema,
+  // Optional options
+  context: function (spark) {
+    return spark
+  },
+  rootValue: null,
+  formatError: function (err) {
+    return {
+      message: err.message
+    }
+  },
+  validationRules: [/* additional validation rules */]
 }))
 
 primus.on('connection', function (spark) {
   spark.graphql()
 })
 ```
+
+##### Options
+
+The `primusGraphQL` plugin function accepts the following options:
+
+  * **`schema`**: A `GraphQLSchema` instance from [`graphql-js`][].
+    A `schema` *must* be provided.
+
+  * **`context`**: Optional. A value to pass as the `context` to the `graphql()`
+    function from [`graphql-js`][]. If a function is used it will be invoke w/ `spark`,
+    and must return the `context`.
+
+  * **`rootValue`**: Optional. A value to pass as the `rootValue` to the `graphql()`
+    function from [`graphql-js`][]. If a function is used it will be invoke w/ `spark`,
+    and must return the `rootValue`.
+
+  * **`formatError`**: Optional. An optional function which will be used to format any
+    errors produced by fulfilling a GraphQL operation. If no function is
+    provided, GraphQL's default spec-compliant [`formatError`][] function will
+    be used.
+
+  * **`validationRules`**: Optional. Additional validation rules queries must
+    satisfy in addition to those defined by the GraphQL spec.
 
 ### Relay Example
 ```js
