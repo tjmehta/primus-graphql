@@ -1,5 +1,5 @@
 # primus-graphql [![Build Status](https://travis-ci.org/tjmehta/primus-graphql.svg?branch=master)](https://travis-ci.org/tjmehta/primus-graphql) [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)
-Primus server/client plugin for GraphQL
+Primus server/client plugin for GraphQL and Relay
 
 # Installation
 ```bash
