@@ -8,7 +8,7 @@ var schema = require('./graphql-schema.js')
 module.exports = createPrimus
 
 function createPrimus (server, pluginOpts) {
-  var primus = module.exports = new Primus(server, {
+  var primus = new Primus(server, {
     transport: 'engine.io',
     parser: 'json',
     graphql: {}

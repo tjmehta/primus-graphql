@@ -1,16 +1,19 @@
 var React = require('react')
 var Relay = require('react-relay')
 
+var UserSubscription = require('./queries/user-subscription.js')
+var UpdateMeMutation = require('./queries/update-me-mutation.js')
+
 class UserComponent extends React.Component {
   render () {
     return <div>
       <div>
         <span>ID:</span>
-        {this.props.user.id}
+        {this.props.me.id}
       </div>
       <div>
         <span>NAME:</span>
-        {this.props.user.name}
+        {this.props.me.name}
       </div>
     </div>
   }
@@ -18,10 +21,12 @@ class UserComponent extends React.Component {
 
 module.exports = Relay.createContainer(UserComponent, {
   fragments: {
-    user: () => Relay.QL`
+    me: () => Relay.QL`
       fragment on User {
         id,
-        name
+        name,
+        ${UpdateMeMutation.getFragment('me')},
+        ${UserSubscription.getFragment('me')}
       }
     `
   }

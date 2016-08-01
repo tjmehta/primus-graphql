@@ -1,12 +1,50 @@
 schema {
   query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+
+input InvalidSubscriptionInput {
+  id: String!
+}
+
+type InvalidSubscriptionOutput {
+  me: User
+}
+
+type Mutation {
+  updateMe(input: UpdateMeInput!): UpdateMePayload
 }
 
 type Query {
+  me: User
+}
+
+type Subscription {
+  userChanges(input: UserChangesInput!): UserChangesOutput
+  invalidSubscription(input: InvalidSubscriptionInput): InvalidSubscriptionOutput
+}
+
+input UpdateMeInput {
+  name: String
+  clientMutationId: String!
+}
+
+type UpdateMePayload {
   user: User
+  clientMutationId: String!
 }
 
 type User {
   id: String
   name: String
+}
+
+input UserChangesInput {
+  id: String!
+  reconnect: Boolean
+}
+
+type UserChangesOutput {
+  user: User
 }

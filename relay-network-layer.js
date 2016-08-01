@@ -1,1 +1,1 @@
-module.exports = require('./lib/relay-network-layer.js')
+module.exports = require('./lib/client/relay-network-layer.js')

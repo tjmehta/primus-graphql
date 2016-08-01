@@ -1,5 +1,5 @@
 build:
-	mkdir -p lib && cp ./src/* ./lib/ && \
+	rm -rf ./lib && mkdir -p lib && cp -r ./src/* ./lib/ && \
 	browserify ./src/primus-graphql.client.js > ./lib/primus-graphql.client.js.tmp; \
 	( \
 		echo 'module.exports = function (primus, primusOpts) {\n'; \

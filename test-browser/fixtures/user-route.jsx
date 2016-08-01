@@ -3,10 +3,10 @@ var Relay = require('react-relay')
 class UserRoute extends Relay.Route {}
 
 UserRoute.queries = {
-  user: (Component) => Relay.QL`
+  me: (Component) => Relay.QL`
     query UserQuery {
-      user {
-        ${Component.getFragment('user')}
+      me {
+        ${Component.getFragment('me')}
       }
     }
   `
