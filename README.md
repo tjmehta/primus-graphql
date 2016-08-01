@@ -346,5 +346,8 @@ var RootContainer = <Relay.RootContainer
 ##### Full subscriptions example
 Check out the end-to-end tests here: test-browser/primus-graphql.e2e.js
 
+# Changelog
+[CHANGELOG.md](https://github.com/tjmehta/primus-graphql/blob/master/CHANGELOG.md)
+
 # License
 MIT
