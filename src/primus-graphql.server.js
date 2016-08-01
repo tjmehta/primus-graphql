@@ -3,20 +3,9 @@ var assert = require('assert')
 var errToJSON = require('error-to-json')
 var debug = require('debug')('primus-graphql:server')
 var defaults = require('101/defaults')
-var isFunction = require('101/is-function')
-var graphql = require('graphql')
 
 var defaultOpts = require('./default-opts.js')
-var utils = require('./respond-utils.js')
-
-var execute = graphql.execute
-var parse = graphql.parse
-var Source = graphql.Source
-var specifiedRules = graphql.specifiedRules
-var validate = graphql.validate
-
-var respond = utils.respond
-var respondErrs = utils.respondErrs
+var DataHandler = require('./server/data-handler.js')
 
 module.exports = createServerPlugin
 
@@ -39,72 +28,19 @@ function createServerPlugin (opts) {
   return function serverPlugin (Primus, primusOpts) {
     primusOpts = primusOpts || {}
     defaults(primusOpts, defaultOpts)
-    var key = primusOpts.key
+    // setup opts on spark - used in handleData
+    Primus.Spark.prototype.__graphql = {
+      opts: opts,
+      primusOpts: primusOpts
+    }
     Primus.Spark.prototype.graphql = function () {
       debug('graphql')
-      if (!~this.listeners('data').indexOf(handleData)) {
-        debug('graphql attach "data" listener')
-        this.on('data', handleData)
-      }
-    }
-    /**
-     * check primus data and handle graphql data
-     * @param  {Object} data primus data
-     */
-    function handleData (data) {
       var spark = this
-      if (data[key]) {
-        debug('handle graphql data')
-        // Data is a Primus-GraphQL request
-        var payload = data[key]
-        var id = payload.id
-        var query = payload.query
-        var variables = payload.variables
-        var operationName = payload.operationName
-        var context
-        var rootValue
-        // Options
-        debug('parse options')
-        try {
-          assert(id, 'primus-graphql: "id" is required')
-          context = isFunction(opts.context)
-            ? opts.context(spark)
-            : opts.context
-          rootValue = isFunction(opts.rootValue)
-            ? opts.rootValue(spark)
-            : opts.rootValue
-        } catch (err) {
-          debug('context or root err: ' + err)
-          return respondErrs(spark, id, 400, [ err ], opts, primusOpts)
-        }
-        // Parse query, reporting any errors.
-        debug('parse query')
-        var source
-        var documentAST
-        try {
-          source = new Source(query, 'GraphQL request')
-          documentAST = parse(source)
-        } catch (syntaxError) {
-          // Respond 400: Bad Request if any syntax errors errors exist.
-          debug('query syntax err: ' + syntaxError)
-          return respondErrs(spark, id, 400, [ syntaxError ], opts, primusOpts)
-        }
-        // Validate AST, reporting any errors.
-        debug('validate')
-        var validationErrors = validate(opts.schema, documentAST, specifiedRules.concat(opts.validationRules))
-        if (validationErrors.length > 0) {
-          // Respond 400: Bad Request if any validation errors exist.
-          debug('validation errs: ' + validationErrors)
-          return respondErrs(spark, id, 400, validationErrors, opts, primusOpts)
-        }
-        // Perform the execution, reporting any errors creating the context.
-        debug('execute')
-        execute(opts.schema, documentAST, rootValue, context, variables, operationName)
-          .then(function (payload) {
-            respond(spark, id, 200, payload, opts, primusOpts)
-          }).catch(function (err) {
-            respondErrs(spark, id, 400, [ err ], opts, primusOpts)
-          })
+      if (!spark.__graphqlDataHandler) {
+        debug('graphql attach "data" handler')
+        var dataHandler = spark.__graphqlDataHandler = new DataHandler(spark, opts, primusOpts)
+        spark.on('data', dataHandler.handleData)
+        spark.on('close', dataHandler.handleClose)
       }
     }
   }

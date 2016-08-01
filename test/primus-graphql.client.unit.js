@@ -10,7 +10,8 @@ var beforeEach = global.beforeEach
 var afterEach = global.afterEach
 
 var defaultOpts = require('../src/default-opts.js')
-console.log(defaultOpts, 'defaultOpts')
+
+var id = 0
 
 describe('primus-graphql client', function () {
   beforeEach(function () {
@@ -34,7 +35,8 @@ describe('primus-graphql client', function () {
   describe('primus.graphql(...)', function () {
     beforeEach(function () {
       var self = this
-      proxyquire('../src/primus-graphql.client.js', {
+      this.subscriptionObservable = {}
+      this.mocks = {
         events: {
           EventEmitter: function () {
             var ee = self.resEE = new EventEmitter()
@@ -42,9 +44,20 @@ describe('primus-graphql client', function () {
             sinon.spy(ee, 'on')
             return ee
           }
-        }
+        },
+        SubscriptionObservable: sinon.stub().returns(this.subscriptionObservable)
+      }
+      this.uuid = id++
+      proxyquire('../src/primus-graphql.client.js', {
+        events: this.mocks.events,
+        './client/subscription-observable.js': this.mocks.SubscriptionObservable,
+        uuid: sinon.stub().returns(this.uuid)
       })
+      sinon.spy(this.primus, '_observeGraphQL')
       this.primus.write = sinon.stub().returns(true)
+    })
+    afterEach(function () {
+      this.primus._observeGraphQL.restore()
     })
 
     describe('write error', function () {
@@ -54,7 +67,7 @@ describe('primus-graphql client', function () {
 
       it('should send a graphql payload (promise)', function (done) {
         var key = defaultOpts.key
-        var query = 'query'
+        var query = 'query ...'
         return this.primus.graphql(query, function (err) {
           expect(err).to.exist()
           expect(err.message).to.match(/write/)
@@ -76,9 +89,9 @@ describe('primus-graphql client', function () {
         this.primus.write.returns(true)
       })
 
-      it('should send a graphql payload (promise)', function () {
+      it('should send a graphql query/mutation payload (promise)', function () {
         var key = defaultOpts.key
-        var query = 'query'
+        var query = 'query ...'
         var vars = { foo: 1 }
         this.primus.graphql(query, vars)
         sinon.assert.calledOnce(this.primus.write)
@@ -93,9 +106,28 @@ describe('primus-graphql client', function () {
         expect(actual[key].variables).to.equal(expected[key].variables)
       })
 
+      it('should create return an observable graphql for subscription payload', function () {
+        var key = defaultOpts.key
+        var query = 'subscription ...'
+        var vars = { foo: 1 }
+        var observable = this.primus.graphql(query, vars)
+        var expected = {}
+        expected[key] = {
+          id: this.uuid,
+          query: query,
+          variables: vars,
+          operationName: undefined
+        }
+        expect(observable).to.equal(this.subscriptionObservable)
+        sinon.assert.calledOnce(this.primus._observeGraphQL)
+        sinon.assert.calledWith(this.primus._observeGraphQL, expected)
+        sinon.assert.calledOnce(this.mocks.SubscriptionObservable)
+        sinon.assert.calledWith(this.mocks.SubscriptionObservable, this.primus, this.resEE, expected, defaultOpts)
+      })
+
       describe('response', function () {
         it('should receive a graphql payload response (promise)', function () {
-          var query = 'query'
+          var query = 'query ...'
           var vars = { foo: 1 }
           var promise = this.primus.graphql(query, vars)
           var uuid = this.primus.write.args[0][0][defaultOpts.key].id
@@ -113,10 +145,11 @@ describe('primus-graphql client', function () {
         })
 
         it('should receive a graphql payload response (callback)', function (done) {
-          var query = 'query'
+          var query = 'mutation ...'
           var vars = { foo: 1 }
+          var files = []
           var res = {}
-          this.primus.graphql(query, vars, function (err, payload) {
+          this.primus.graphql(query, vars, files, function (err, payload) {
             if (err) { return done(err) }
             expect(payload).to.deep.equal(res[defaultOpts.key])
             done()
@@ -130,9 +163,31 @@ describe('primus-graphql client', function () {
           this.primus.emit('data', res)
         })
 
+        it('should receive a graphql payload response (error)', function (done) {
+          var query = 'mutation ...'
+          var vars = { foo: 1 }
+          var files = []
+          var res = {}
+          this.primus.graphql(query, vars, files, function (err, payload) {
+            if (err) { return done(err) }
+            expect(payload).to.deep.equal(res[defaultOpts.key])
+            expect(payload.errors[0]).to.be.an.instanceOf(Error)
+            done()
+          })
+          var uuid = this.primus.write.args[0][0][defaultOpts.key].id
+          res[defaultOpts.key] = {
+            id: uuid,
+            errors: [{
+              message: 'message'
+            }],
+            statusCode: 400
+          }
+          this.primus.emit('data', res)
+        })
+
         describe('two', function () {
           it('should not attach handler twice', function () {
-            var query = 'query'
+            var query = 'query ...'
             var vars = { foo: 1 }
             var key = defaultOpts.key
             // res
@@ -170,7 +225,7 @@ describe('primus-graphql client', function () {
 
         describe('non-graphql payload', function () {
           beforeEach(function () {
-            var query = 'query'
+            var query = 'query ...'
             var vars = { foo: 1 }
             this.primus.graphql(query, vars, function () {
               throw new Error('should not happen')
@@ -188,6 +243,5 @@ describe('primus-graphql client', function () {
         })
       })
     })
-
   })
 })

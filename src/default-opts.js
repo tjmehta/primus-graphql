@@ -1,3 +1,6 @@
+var errToJSON = require('error-to-json')
+
 module.exports = {
-  key: 'primus-graphql'
+  formatError: errToJSON,
+  validationRules: []
 }

@@ -1,6 +1,7 @@
 var assert = require('assert')
 
 var defaults = require('101/defaults')
+var put = require('101/put')
 var retry = require('promise-retry')
 var warning = require('warning')
 
@@ -101,6 +102,47 @@ PrimusRelayNetworkLayer.prototype.sendQueries = function (queryRequests) {
 }
 
 /**
+ * send graphql subscription
+ * @param  {RelayQueryRequest} subscriptionRequest
+ * @return {Promise<,Error>}
+ */
+PrimusRelayNetworkLayer.prototype.sendSubscription = function (subscriptionRequest) {
+  var observable = this.primus.graphql(
+    subscriptionRequest.getQueryString(),
+    subscriptionRequest.getVariables()
+  )
+  var onError = subscriptionRequest.onError.bind(subscriptionRequest)
+  var onAllErrors = function (_err, isFinal, retryCount) {
+    if (!isFinal) {
+      warning(false, 'sendSubscription: Error, retrying.')
+    }
+  }
+  var onFinalError = function onFinalError (_err) {
+    var message = [
+      'sendSubscription(): Failed to maintain subscription to server,',
+      'tried 1 times.'
+    ].join(' ')
+    var err = new Error(message)
+    err.source = _err
+    onError(err)
+  }
+  var retryOpts = put(this.opts.retry, {
+    onError: onAllErrors
+  })
+
+  observable = observable
+    .publish()
+    .refCount()
+    .backoff(retryOpts)
+  // subscribe
+  return observable.subscribe(
+    subscriptionRequest.onNext.bind(subscriptionRequest),
+    onFinalError,
+    subscriptionRequest.onCompleted.bind(subscriptionRequest)
+  )
+}
+
+/**
  * supports
  * @return {Boolean} false
  */
@@ -119,13 +161,13 @@ PrimusRelayNetworkLayer.prototype._sendQueryWithRetries = function (queryRequest
   function throwRetryErr (source) {
     var message = [
       'sendQueryWithRetries(): Failed to get response from server,',
-      'tried', opts.retry.retries, 'times.'
+      'tried', opts.retry.retries + 1, 'times.'
     ].join(' ')
     var err = new Error(message)
     err.source = source
     throw err
   }
-  return retry(function (retry, number) {
+  return retry(function (retryCb, number) {
     return Promise.race([
       timeout(opts.timeout).then(throwRetryErr.bind(null, { TIMEDOUT: true })),
       primus.graphql(
@@ -137,11 +179,11 @@ PrimusRelayNetworkLayer.prototype._sendQueryWithRetries = function (queryRequest
         if (payload.statusCode >= 200 && payload.statusCode < 300) {
           return payload
         } else {
-          warning(false, 'fetchWithRetries: Error statusCode, retrying.')
+          warning(false, 'sendQueryWithRetries: Error statusCode, retrying.')
           throwRetryErr(payload)
         }
       })
-      .catch(retry)
+      .catch(retryCb)
   }, opts.retry)
 }
 

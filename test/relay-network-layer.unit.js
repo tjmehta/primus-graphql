@@ -1,12 +1,18 @@
 var expect = require('code').expect
+var Observable = require('rxjs/Observable').Observable
+var shimmer = require('shimmer')
 var sinon = require('sinon')
+var StaticObservable = require('static-observable')
+require('observable-backoff')
+require('rxjs/add/operator/publish')
 require('sinon-as-promised')
 
 var describe = global.describe
 var it = global.it
+var afterEach = global.afterEach
 var beforeEach = global.beforeEach
 
-var RelayNetworkLayer = require('../src/relay-network-layer.js')
+var RelayNetworkLayer = require('../src/client/relay-network-layer.js')
 
 describe('relay-network-layer', function () {
   describe('constructor', function () {
@@ -31,11 +37,12 @@ describe('relay-network-layer', function () {
       this.primus = {
         graphql: sinon.stub()
       }
+      this.opts = {}
+      this.networkLayer = new RelayNetworkLayer(this.primus, this.opts)
     })
 
     describe('sendMutation', function () {
       beforeEach(function () {
-        this.networkLayer = new RelayNetworkLayer(this.primus)
         this.mutationRequest = {
           getDebugName: sinon.stub().returns('debugName'),
           getQueryString: sinon.stub(),
@@ -120,9 +127,98 @@ describe('relay-network-layer', function () {
       })
     })
 
+    describe('sendSubscription', function () {
+      var expectBound = function (expected) {
+        return sinon.match(function (actual) {
+          expect(actual.__bound).to.equal(expected)
+          return true
+        })
+      }
+      var expectName = function (name) {
+        return sinon.match(function (actual) {
+          expect(actual.name).to.equal(name)
+          return true
+        })
+      }
+
+      beforeEach(function () {
+        var self = this
+        this.query = 'query'
+        this.variables = {}
+        this.subscriptionRequest = {
+          onCompleted: sinon.stub(),
+          onError: sinon.stub(),
+          onNext: sinon.stub(),
+          getQueryString: sinon.stub().returns(this.query),
+          getVariables: sinon.stub().returns(this.variables)
+        }
+        this.observable = new StaticObservable()
+        shimmer.wrap(Observable.prototype, 'backoff', function (orig) {
+          return function () {
+            var ret = orig.apply(this, arguments)
+            self.backoffObservable = ret
+            sinon.spy(self.backoffObservable, 'subscribe')
+            return ret
+          }
+        })
+        shimmer.wrap(Function.prototype, 'bind', function (orig) {
+          return function () {
+            var bound = orig.apply(this, arguments)
+            bound.__bound = this
+            return bound
+          }
+        })
+      })
+      afterEach(function () {
+        shimmer.unwrap(Observable.prototype, 'backoff')
+        shimmer.unwrap(Function.prototype, 'bind')
+      })
+
+      it('should subscribe to retryable observable and return rx-subscription', function () {
+        this.primus.graphql.returns(this.observable)
+        var rxSubscription = this.networkLayer.sendSubscription(this.subscriptionRequest)
+        expect(rxSubscription).to.exist()
+        expect(rxSubscription.unsubscribe).to.be.a.function()
+        sinon.assert.calledOnce(this.backoffObservable.subscribe)
+        sinon.assert.calledWith(this.backoffObservable.subscribe,
+          expectBound(this.subscriptionRequest.onNext),
+          expectName('onFinalError'),
+          expectBound(this.subscriptionRequest.onCompleted))
+      })
+
+      describe('errors', function () {
+        beforeEach(function () {
+          this.err = new Error('boom')
+          this.observable.error(this.err)
+        })
+
+        it('should call onError (no retries)', function () {
+          this.opts.retry.retries = 0
+          this.primus.graphql.returns(this.observable)
+          var rxSubscription = this.networkLayer.sendSubscription(this.subscriptionRequest)
+          expect(rxSubscription).to.exist()
+          expect(rxSubscription.unsubscribe).to.be.a.function()
+          sinon.assert.calledOnce(this.subscriptionRequest.onError)
+          sinon.assert.calledWith(this.subscriptionRequest.onError, sinon.match(function (err) {
+            expect(err.message).to.equal([
+              'sendSubscription(): Failed to maintain subscription to server,',
+              'tried 1 times.'
+            ].join(' '))
+            return true
+          }))
+        })
+
+        it('should call onError (retries)', function () {
+          this.primus.graphql.returns(this.observable)
+          var rxSubscription = this.networkLayer.sendSubscription(this.subscriptionRequest)
+          expect(rxSubscription).to.exist()
+          expect(rxSubscription.unsubscribe).to.be.a.function()
+        })
+      })
+    })
+
     describe('sendQueries', function () {
       beforeEach(function () {
-        this.networkLayer = new RelayNetworkLayer(this.primus)
         sinon.stub(this.networkLayer, '_sendQueryWithRetries')
         this.queryRequest = {
           getDebugName: sinon.stub().returns('debugName'),
@@ -199,10 +295,6 @@ describe('relay-network-layer', function () {
     })
 
     describe('supports', function () {
-      beforeEach(function () {
-        this.networkLayer = new RelayNetworkLayer(this.primus)
-      })
-
       it('should return false', function () {
         var ret = this.networkLayer.supports()
         expect(ret).to.be.false()
@@ -211,7 +303,6 @@ describe('relay-network-layer', function () {
 
     describe('_sendQueryWithRetries', function () {
       beforeEach(function () {
-        this.networkLayer = new RelayNetworkLayer(this.primus)
         this.queryRequest = {
           getDebugName: sinon.stub().returns('debugName'),
           getQueryString: sinon.stub(),
@@ -229,7 +320,6 @@ describe('relay-network-layer', function () {
         var payload = { statusCode: 200, data: 1 }
         this.primus.graphql.resolves(payload)
         // send query
-        console.log()
         return this.networkLayer._sendQueryWithRetries(this.queryRequest)
           .then(function (_payload) {
             expect(_payload).to.equal(payload)
@@ -257,7 +347,7 @@ describe('relay-network-layer', function () {
             sinon.assert.calledThrice(primus.graphql)
             expect(err.message).to.equal([
               'sendQueryWithRetries(): Failed to get response from server,',
-              'tried', opts.retry.retries, 'times.'
+              'tried', opts.retry.retries + 1, 'times.'
             ].join(' '))
             done()
           })
