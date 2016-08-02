@@ -1,14 +1,22 @@
 var assert = require('assert')
 var debug = require('debug')('primus-graphql:query-executor')
 var isFunction = require('101/is-function')
-var keypather = require('keypather')()
-var hasProps = require('101/has-properties')
 var GraphQL = require('graphql')
-var graphqlKinds = require('graphql/language/kinds')
 var PromisedObservable = require('promised-observable')
 var StaticObservable = require('static-observable')
 
 var graphqlObserve = require('./graphql-observe.js')
+
+var checkForPayloadErrors = function (data) {
+  if (data.errors) {
+    if (data.errors.length === 1) {
+      throw data.errors[0]
+    }
+    var err = new Error('multiple errors')
+    err.errors = data.errors
+    throw err
+  }
+}
 
 module.exports = Executor
 
@@ -94,7 +102,10 @@ Executor.prototype.execute = function (payload, _rootValue) {
     // execute
     debug('GraphQL.execute:')
     GraphQL.execute(schema, documentAST, rootValue, context, variables)
-      .then(resolve)
+      .then(function (data) {
+        checkForPayloadErrors(data)
+        resolve(data)
+      })
       .catch(reject)
   })
 }
@@ -128,14 +139,7 @@ Executor.prototype.observe = function (payload) {
     // execute
     debug('graphqlObserve:')
     var promise = graphqlObserve(schema, documentAST, rootValue, context, variables).then(function (data) {
-      if (data.errors) {
-        if (data.errors.length === 1) {
-          throw data.errors[0]
-        }
-        var err = new Error('multiple errors')
-        err.errors = data.errors
-        throw err
-      }
+      checkForPayloadErrors(data)
       return data.data
     })
     return new PromisedObservable(promise)
