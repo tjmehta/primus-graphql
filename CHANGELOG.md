@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.5.2
+* Fix: remove react-relay from peer deps, as it is optional.
+
 ## v1.5.1
 * Fix: improved error messages on client side
 * Fix: fixed edgecase where error payload would have a 200 status code
