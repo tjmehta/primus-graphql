@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.5.0
+* Features: `subscriptions.observe` now recieves `context` and `info` just like `mutation.mutateAndGetPayload`
+
 ## v1.4.0
 * Feature: GraphQL Relay Subscription observe - added support for promises (that resolve observables)
 
