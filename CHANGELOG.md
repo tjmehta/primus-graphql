@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.4.0
+* Feature: GraphQL Relay Subscription observe - added support for promises (that resolve observables)
+
 ## v1.3.0
 * Feature: Added support for relay subscriptions
 * Fix: OOP cleanup
