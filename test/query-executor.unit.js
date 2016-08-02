@@ -205,7 +205,7 @@ describe('query-executor', function () {
         this.payload = {
           query: query,
           variables: {
-            input_0: {
+            input: {
               id: 0
             }
           }
@@ -217,7 +217,6 @@ describe('query-executor', function () {
         var observable = this.executor.observe(this.payload)
         expect(observable).to.exist()
         expect(observable.subscribe).to.exist()
-        // make sure it is not StaticObservable.error()..
         observable.subscribe(
           noop,
           function (err) {
@@ -235,15 +234,11 @@ describe('query-executor', function () {
           this.payload.query = this.payload.query.replace(/UserChangesInput/, 'UserChangesPromiseInput')
         })
 
-        it('should invoke schema "observe" method', function (done) {
+        it('should handle promises returned by observe', function (done) {
           var safeDone = once(done)
           var observable = this.executor.observe(this.payload)
           expect(observable).to.exist()
-          console.log(observable.constructor.name)
-          console.log(observable.constructor.name)
-          console.log(observable.constructor.name)
           expect(observable.subscribe).to.exist()
-          // make sure it is not StaticObservable.error()..
           observable.subscribe(
             noop,
             function (err) {
@@ -262,18 +257,74 @@ describe('query-executor', function () {
           this.payload.query = this.payload.query.replace(/UserChangesInput/, 'InvalidSubscriptionInput')
         })
 
-        it('should invoke schema "observe" method', function (done) {
+        it('should throw error if subscription does not have "observe"', function (done) {
           var self = this
           var observable = this.executor.observe(this.payload)
-          // make sure it is not StaticObservable.error()..
-          expect(observable).to.be.an.instanceOf(StaticObservable)
           observable.subscribe(noop, onError, noop)
           function onError (err) {
-            expect(err.message).to.equal('subscription validation error')
-            expect(err.errors[0].message).to.equal('"invalidSubscription" observe not implemented in schema')
+            try {
+              expect(err.message).to.equal('"invalidSubscription" does not have an observe function')
+            } catch (err) {
+              return done(err)
+            }
             done()
           }
         })
+
+        describe('runtime error', function () {
+          beforeEach(function () {
+            this.err = new Error('boom')
+            sinon.stub(this.Executor, '_parseQuery').throws(this.err)
+          })
+          afterEach(function () {
+            this.Executor._parseQuery.restore()
+          })
+
+          it('should be caught and errored through observable', function(done) {
+            var self = this
+            var observable = this.executor.observe(this.payload)
+            observable.subscribe(noop, onError, noop)
+            function onError (err) {
+              try {
+                expect(err).to.equal(self.err)
+              } catch (err) {
+                return done(err)
+              }
+              done()
+            }
+          })
+        })
+
+        describe('multiple errors', function () {
+          beforeEach(function () {
+            this.errors = [new Error('boom1'), new Error('boom2')]
+            this.mocks = {
+              graphqlObserve: sinon.stub().resolves({
+                errors: this.errors
+              })
+            }
+            this.Executor = proxyquire('../src/server/query-executor.js', {
+              './graphql-observe.js': this.mocks.graphqlObserve
+            })
+            this.executor = new this.Executor(this.spark, this.opts, this.primusOpts)
+          })
+
+          it('should handle multiple payload errors', function (done) {
+            var self = this
+            var observable = this.executor.observe(this.payload)
+            sinon.assert.calledOnce(this.mocks.graphqlObserve)
+            observable.subscribe(noop, onError, noop)
+            function onError (err) {
+              try {
+                expect(err.message).to.equal('multiple errors')
+                expect(err.errors).to.equal(self.errors)
+              } catch (err) {
+                return done(err)
+              }
+              done()
+            }
+          })
+        });
       })
     })
   })

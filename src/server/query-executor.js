@@ -4,9 +4,11 @@ var isFunction = require('101/is-function')
 var keypather = require('keypather')()
 var hasProps = require('101/has-properties')
 var GraphQL = require('graphql')
-var graphqlKinds = require('graphql/language/kinds.js')
+var graphqlKinds = require('graphql/language/kinds')
 var PromisedObservable = require('promised-observable')
 var StaticObservable = require('static-observable')
+
+var graphqlObserve = require('./graphql-observe.js')
 
 module.exports = Executor
 
@@ -63,35 +65,6 @@ Executor._validateAST = function (documentAST, opts) {
   }
 }
 
-/**
- * get subscription field
- * @param  {Object} schema
- * @param  {Object} documentAST
- * @return {Field} subscriptionField
- */
-Executor._getSubscriptionField = function (schema, documentAST) {
-  try {
-    // check ast
-    assert(documentAST.definitions.length === 1, 'subscription query: only supports a single definition')
-    var definition = documentAST.definitions[0]
-    assert(definition.operation === 'subscription', 'subscription query: query operation must be "subscription"')
-    var rootField = keypather.get(definition,
-      'selectionSet.selections.find(%)', hasProps({ kind: graphqlKinds.FIELD }))
-    assert(rootField, 'subscription query: subscription should have a root field"')
-    // check schema
-    var subscriptionName = rootField.name.value
-    var subscriptionField = keypather.get(schema, '_subscriptionType._fields["' + subscriptionName + '"]')
-    assert(subscriptionField, '"' + subscriptionName + '" subscription not found in schema')
-    assert(subscriptionField.observe, '"' + subscriptionName + '" observe not implemented in schema')
-  } catch (_err) {
-    var err = new Error('subscription validation error')
-    err.statusCode = 400
-    err.errors = [_err]
-    throw err
-  }
-  return subscriptionField
-}
-
 // instance methods
 
 /**
@@ -136,19 +109,36 @@ Executor.prototype.observe = function (payload) {
   debug('observe:', payload.id, payload.query, payload.variables)
   assert(payload.query, '"query" is required')
   try {
-    var documentAST = Executor._parseQuery(payload.query)
-    Executor._validateAST(documentAST, this._opts)
-    var subscriptionField = Executor._getSubscriptionField(this._opts.schema, documentAST)
-    // TODO: input_0
-    var ret = subscriptionField.observe(payload.variables.input_0)
-    if (ret && isFunction(ret.then)) {
-      var promise = ret
-      return new PromisedObservable(promise)
-    }
-    assert(!ret || isFunction(ret.subscribe), 'observe: expected subscription.observe to return an observable (or promise)')
-    // ret is an observable
-    var observable = ret
-    return observable
+    var spark = this._spark
+    var opts = this._opts
+    // payload parts
+    var query = payload.query
+    var variables = payload.variables
+    // primus-graphql opts
+    var schema = opts.schema
+    var context = opts.context
+    var rootValue = opts.rootValue
+    // parse query
+    var documentAST = Executor._parseQuery(query)
+    // validate ast
+    Executor._validateAST(documentAST, opts)
+    // resolve options
+    context = Executor._resolveOpt(context, spark)
+    rootValue = Executor._resolveOpt(rootValue, spark)
+    // execute
+    debug('graphqlObserve:')
+    var promise = graphqlObserve(schema, documentAST, rootValue, context, variables).then(function (data) {
+      if (data.errors) {
+        if (data.errors.length === 1) {
+          throw data.errors[0]
+        }
+        var err = new Error('multiple errors')
+        err.errors = data.errors
+        throw err
+      }
+      return data.data
+    })
+    return new PromisedObservable(promise)
   } catch (err) {
     return StaticObservable.error(err)
   }
