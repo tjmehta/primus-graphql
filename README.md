@@ -204,7 +204,7 @@ var UserChangesSubscription = relaySubscription({
       type: UserType
     }
   },
-  observe: (input) => {
+  observe: (input, context, info) => {
     var event = 'users:' + input.id
     debug('observe', event, input, input.id)
     return new Observable(function (subscriber) {

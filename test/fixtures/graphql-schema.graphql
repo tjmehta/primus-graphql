@@ -9,7 +9,7 @@ input InvalidSubscriptionInput {
 }
 
 type InvalidSubscriptionOutput {
-  me: User
+  user: User
 }
 
 type Mutation {
@@ -22,6 +22,7 @@ type Query {
 
 type Subscription {
   userChanges(input: UserChangesInput!): UserChangesOutput
+  userChangesPromise(input: UserChangesPromiseInput!): UserChangesPromiseOutput
   invalidSubscription(input: InvalidSubscriptionInput): InvalidSubscriptionOutput
 }
 
@@ -46,5 +47,14 @@ input UserChangesInput {
 }
 
 type UserChangesOutput {
+  user: User
+}
+
+input UserChangesPromiseInput {
+  id: String!
+  reconnect: Boolean
+}
+
+type UserChangesPromiseOutput {
   user: User
 }

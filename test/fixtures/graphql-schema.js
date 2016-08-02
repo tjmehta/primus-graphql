@@ -103,7 +103,7 @@ var UserChanges = relaySubscription({
   },
   outputFields: {
     user: {
-      type: UserType // TODO: not actually used yet..
+      type: UserType
     }
   },
   observe: (input) => {
@@ -146,7 +146,7 @@ var UserChangesPromise = relaySubscription({
   },
   outputFields: {
     user: {
-      type: UserType // TODO: not actually used yet..
+      type: UserType
     }
   },
   observe: (input) => {

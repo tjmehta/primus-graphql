@@ -80,6 +80,7 @@
     "cast-array": "^1.0.1",
     "debug": "^2.2.0",
     "error-to-json": "^1.1.0",
+    "iterall": "^1.0.2",
     "keypather": "^2.0.0",
     "observable-backoff": "^1.0.0",
     "promise-retry": "^1.1.0",
