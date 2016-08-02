@@ -229,11 +229,37 @@ describe('query-executor', function () {
         setTimeout(safeDone, 100)
       })
 
+      describe('promised observable', function () {
+        beforeEach(function () {
+          this.payload.query = this.payload.query.replace(/userChanges/, 'userChangesPromise')
+          this.payload.query = this.payload.query.replace(/UserChangesInput/, 'UserChangesPromiseInput')
+        })
+
+        it('should invoke schema "observe" method', function (done) {
+          var safeDone = once(done)
+          var observable = this.executor.observe(this.payload)
+          expect(observable).to.exist()
+          console.log(observable.constructor.name)
+          console.log(observable.constructor.name)
+          console.log(observable.constructor.name)
+          expect(observable.subscribe).to.exist()
+          // make sure it is not StaticObservable.error()..
+          observable.subscribe(
+            noop,
+            function (err) {
+              err.errors
+                ? safeDone(err.errors[0])
+                : safeDone(err)
+            },
+            noop)
+          setTimeout(safeDone, 100)
+        })
+      })
+
       describe('errors', function () {
         beforeEach(function () {
           this.payload.query = this.payload.query.replace(/userChanges/, 'invalidSubscription')
-          this.payload.query = this.payload.query.replace(/UserChanges/, 'InvalidSubscription')
-          console.log(this.payload.query)
+          this.payload.query = this.payload.query.replace(/UserChangesInput/, 'InvalidSubscriptionInput')
         })
 
         it('should invoke schema "observe" method', function (done) {

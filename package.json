@@ -83,6 +83,7 @@
     "keypather": "^2.0.0",
     "observable-backoff": "^1.0.0",
     "promise-retry": "^1.1.0",
+    "promised-observable": "^1.0.0",
     "static-observable": "^1.0.0",
     "uuid": "^2.0.2",
     "warning": "^3.0.0"

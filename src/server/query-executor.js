@@ -5,6 +5,7 @@ var keypather = require('keypather')()
 var hasProps = require('101/has-properties')
 var GraphQL = require('graphql')
 var graphqlKinds = require('graphql/language/kinds.js')
+var PromisedObservable = require('promised-observable')
 var StaticObservable = require('static-observable')
 
 module.exports = Executor
@@ -139,8 +140,14 @@ Executor.prototype.observe = function (payload) {
     Executor._validateAST(documentAST, this._opts)
     var subscriptionField = Executor._getSubscriptionField(this._opts.schema, documentAST)
     // TODO: input_0
-    var observable = subscriptionField.observe(payload.variables.input_0)
-    assert(isFunction(observable.subscribe), 'observe: expected subscription.observe to return an observable')
+    var ret = subscriptionField.observe(payload.variables.input_0)
+    if (ret && isFunction(ret.then)) {
+      var promise = ret
+      return new PromisedObservable(promise)
+    }
+    assert(!ret || isFunction(ret.subscribe), 'observe: expected subscription.observe to return an observable (or promise)')
+    // ret is an observable
+    var observable = ret
     return observable
   } catch (err) {
     return StaticObservable.error(err)

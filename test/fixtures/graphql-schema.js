@@ -137,6 +137,50 @@ var UserChanges = relaySubscription({
   }
 })
 
+var UserChangesPromise = relaySubscription({
+  name: 'UserChangesPromise',
+  inputFields: {
+    id: {
+      type: new GraphQLNonNull(GraphQLString)
+    }
+  },
+  outputFields: {
+    user: {
+      type: UserType // TODO: not actually used yet..
+    }
+  },
+  observe: (input) => {
+    var event = 'users:' + input.id
+    debug('observe', event, input, input.id)
+    var observable = new Observable(function (subscriber) {
+      debug('subscribe', event)
+      db.ee.on(event, onNext)
+      db.ee.on(event + ':error', subscriber.error)
+      db.ee.on(event + ':completed', subscriber.complete)
+      function onNext (user) {
+        subscriber.next({
+          userChanges: {
+            user: user
+          }
+        })
+      }
+      if (input.reconnect) {
+        debug('reconnect', event, input, input.id)
+        // re-subscribed due to reconnect
+        // emit user immediately so that frontend has latest data
+        db.ee.emit(event, db.users[input.id])
+      }
+      return new RxSubscription(function () {
+        debug('dispose', event, input.id)
+        db.ee.removeListener(event, onNext)
+        db.ee.removeListener(event + ':error', subscriber.error)
+        db.ee.removeListener(event + ':completed', subscriber.complete)
+      })
+    })
+    return Promise.resolve(observable)
+  }
+})
+
 var Mutation = new GraphQLObjectType({
   name: 'Mutation',
   description: 'Root query',
@@ -167,6 +211,7 @@ var Subscription = new GraphQLObjectType({
   description: 'Root subscription',
   fields: {
     userChanges: UserChanges,
+    userChangesPromise: UserChangesPromise,
     invalidSubscription: InvalidSubscription
   }
 })
