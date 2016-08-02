@@ -11,6 +11,18 @@ var timeout = function (time) {
   })
 }
 
+var createPayloadError = function (req, type, payload) {
+  var message = [
+    'Server request for ', type, ' `',
+    req.getDebugName(), '` ',
+    'failed for the following reasons:\n\n',
+    formatRequestErrors(req, payload.errors)
+  ].join('')
+  var err = new Error(message)
+  err.source = payload
+  return err
+}
+
 module.exports = PrimusRelayNetworkLayer
 
 function PrimusRelayNetworkLayer (primus, opts) {
@@ -39,22 +51,17 @@ PrimusRelayNetworkLayer.prototype.sendMutation = function (mutationRequest) {
     mutationRequest.getVariables(),
     mutationRequest.getFiles()
   ).then(function (payload) {
-    var err
-    var message
     if (payload.hasOwnProperty('errors')) {
-      message = [
-        'Server request for mutation `',
-        mutationRequest.getDebugName(), '` ',
-        'failed for the following reasons:\n\n',
-        formatRequestErrors(mutationRequest, payload.errors)
-      ].join('')
-      err = new Error(message)
+      var err = new Error('payload errors')
       err.source = payload
-      mutationRequest.reject(err)
-      return
+      throw err
     }
     mutationRequest.resolve({ response: payload.data })
   }).catch(function (err) {
+    var payload = err.source
+    if (payload && payload.hasOwnProperty('errors')) {
+      err = createPayloadError(mutationRequest, 'mutation', payload)
+    }
     mutationRequest.reject(err)
   })
 }
@@ -72,16 +79,9 @@ PrimusRelayNetworkLayer.prototype.sendQueries = function (queryRequests) {
         var err
         var message
         if (payload.hasOwnProperty('errors')) {
-          message = [
-            'Server request for query `',
-            queryRequest.getDebugName(),
-            '` failed for the following reasons:\n\n',
-            formatRequestErrors(queryRequest, payload.errors)
-          ].join('')
-          err = new Error(message)
+          err = new Error('payload errors')
           err.source = payload
-          queryRequest.reject(err)
-          return
+          throw err
         }
         if (!payload.hasOwnProperty('data')) {
           message = [
@@ -96,6 +96,10 @@ PrimusRelayNetworkLayer.prototype.sendQueries = function (queryRequests) {
         queryRequest.resolve({ response: payload.data })
       })
       .catch(function (err) {
+        var payload = err.source
+        if (payload && payload.hasOwnProperty('errors')) {
+          err = createPayloadError(queryRequest, 'query', payload)
+        }
         queryRequest.reject(err)
       })
   }))
@@ -117,18 +121,19 @@ PrimusRelayNetworkLayer.prototype.sendSubscription = function (subscriptionReque
       warning(false, 'sendSubscription: Error, retrying.')
     }
   }
-  var onFinalError = function onFinalError (_err) {
-    var message = [
-      'sendSubscription(): Failed to maintain subscription to server,',
-      'tried 1 times.'
-    ].join(' ')
-    var err = new Error(message)
-    err.source = _err
-    onError(err)
-  }
   var retryOpts = put(this.opts.retry, {
     onError: onAllErrors
   })
+  var onFinalError = function onFinalError (_err) {
+    var message = [
+      'sendSubscription(): Failed to maintain subscription to server,',
+      'tried', retryOpts.retries + 1, 'times.'
+    ].join(' ')
+    warning(false, message)
+    var err = new Error(message)
+    err.source = { errors: [_err] }
+    onError(err)
+  }
 
   observable = observable
     .publish()
@@ -163,13 +168,14 @@ PrimusRelayNetworkLayer.prototype._sendQueryWithRetries = function (queryRequest
       'sendQueryWithRetries(): Failed to get response from server,',
       'tried', opts.retry.retries + 1, 'times.'
     ].join(' ')
+    warning(false, message)
     var err = new Error(message)
-    err.source = source
+    err.source = source // payload
     throw err
   }
   return retry(function (retryCb, number) {
     return Promise.race([
-      timeout(opts.timeout).then(throwRetryErr.bind(null, { TIMEDOUT: true })),
+      timeout(opts.timeout).then(throwRetryErr.bind(null, { errors: new Error('Request timed out') })),
       primus.graphql(
         queryRequest.getQueryString(),
         queryRequest.getVariables()

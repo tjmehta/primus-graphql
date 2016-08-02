@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.1
+* Fix: improved error messages on client side
+* Fix: fixed edgecase where error payload would have a 200 status code
+
 ## v1.5.0
 * Features: `subscriptions.observe` now recieves `context` and `info` just like `mutation.mutateAndGetPayload`
 
