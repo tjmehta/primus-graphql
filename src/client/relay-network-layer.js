@@ -161,21 +161,24 @@ PrimusRelayNetworkLayer.prototype.supports = function () {
  * @return {Promise<,Error>}
  */
 PrimusRelayNetworkLayer.prototype._sendQueryWithRetries = function (queryRequest) {
+  var self = this
   var opts = this.opts
   var primus = this.primus
-  function throwRetryErr (source) {
+  function throwRetryErr (source, count) {
     var message = [
       'sendQueryWithRetries(): Failed to get response from server,',
       'tried', opts.retry.retries + 1, 'times.'
     ].join(' ')
-    warning(false, message)
+    if (count > self.opts.retry.retries) {
+      warning(false, message)
+    }
     var err = new Error(message)
     err.source = source // payload
     throw err
   }
-  return retry(function (retryCb, number) {
+  return retry(function (retryCb, count) {
     return Promise.race([
-      timeout(opts.timeout).then(throwRetryErr.bind(null, { errors: new Error('Request timed out') })),
+      timeout(opts.timeout).then(throwRetryErr.bind(null, { errors: new Error('Request timed out') }, count)),
       primus.graphql(
         queryRequest.getQueryString(),
         queryRequest.getVariables()
@@ -186,7 +189,7 @@ PrimusRelayNetworkLayer.prototype._sendQueryWithRetries = function (queryRequest
           return payload
         } else {
           warning(false, 'sendQueryWithRetries: Error statusCode, retrying.')
-          throwRetryErr(payload)
+          throwRetryErr(payload, count)
         }
       })
       .catch(retryCb)

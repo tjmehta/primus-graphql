@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.3
+* Fix: improved warning messages for retries
+* Fix: remove graphql from peer deps, as it is optional.
+
 ## v1.5.2
 * Fix: remove react-relay from peer deps, as it is optional.
 
