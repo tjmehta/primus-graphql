@@ -3,14 +3,11 @@ var it = global.it
 var beforeEach = global.beforeEach
 var afterEach = global.afterEach
 
-var compose = require('101/compose')
 var expect = require('code').expect
 var once = require('once')
 var noop = require('101/noop')
-var pluck = require('101/pluck')
 var proxyquire = require('proxyquire')
 var sinon = require('sinon')
-var StaticObservable = require('static-observable')
 require('sinon-as-promised')
 
 var Executor = require('../src/server/query-executor.js')
@@ -34,7 +31,7 @@ describe('query-executor', function () {
     })
 
     describe('statics', function () {
-      describe('_parseQuery', function () {
+      describe('parseQuery', function () {
         it('should parse a query', function () {
           var mocks = this.mocks
           var source = {}
@@ -42,7 +39,7 @@ describe('query-executor', function () {
           var documentAST = {}
           mocks.graphql.parse.returns(documentAST)
           var query = {}
-          var ret = this.Executor._parseQuery(query)
+          var ret = this.Executor.parseQuery(query)
           // assertions
           sinon.assert.calledOnce(mocks.graphql.Source)
           sinon.assert.calledWith(mocks.graphql.Source, query, 'GraphQL request')
@@ -114,12 +111,12 @@ describe('query-executor', function () {
 
       describe('execute', function () {
         beforeEach(function () {
-          sinon.stub(this.Executor, '_parseQuery')
+          sinon.stub(this.Executor, 'parseQuery')
           sinon.stub(this.Executor, '_validateAST')
           sinon.spy(this.Executor, '_resolveOpt')
         })
         afterEach(function () {
-          this.Executor._parseQuery.restore()
+          this.Executor.parseQuery.restore()
           this.Executor._validateAST.restore()
           this.Executor._resolveOpt.restore()
         })
@@ -137,13 +134,13 @@ describe('query-executor', function () {
           var rootValue = this.rootValue
           // stubs
           var documentAST = {}
-          Executor._parseQuery.returns(documentAST)
+          Executor.parseQuery.returns(documentAST)
           var result = {}
           mocks.graphql.execute.resolves(result)
           // execute
           return this.executor.execute(payload).then(function (result) {
-            sinon.assert.calledOnce(Executor._parseQuery)
-            sinon.assert.calledWith(Executor._parseQuery, payload.query)
+            sinon.assert.calledOnce(Executor.parseQuery)
+            sinon.assert.calledWith(Executor.parseQuery, payload.query)
             sinon.assert.calledOnce(Executor._validateAST)
             sinon.assert.calledWith(Executor._validateAST,
               documentAST, opts)
@@ -156,7 +153,7 @@ describe('query-executor', function () {
         describe('error', function () {
           beforeEach(function () {
             this.parseErr = new Error('boom')
-            this.Executor._parseQuery.throws(this.parseErr)
+            this.Executor.parseQuery.throws(this.parseErr)
           })
           it('should catch errors and promise.reject them', function (done) {
             var self = this
@@ -258,7 +255,6 @@ describe('query-executor', function () {
         })
 
         it('should throw error if subscription does not have "observe"', function (done) {
-          var self = this
           var observable = this.executor.observe(this.payload)
           observable.subscribe(noop, onError, noop)
           function onError (err) {
@@ -274,13 +270,13 @@ describe('query-executor', function () {
         describe('runtime error', function () {
           beforeEach(function () {
             this.err = new Error('boom')
-            sinon.stub(this.Executor, '_parseQuery').throws(this.err)
+            sinon.stub(this.Executor, 'parseQuery').throws(this.err)
           })
           afterEach(function () {
-            this.Executor._parseQuery.restore()
+            this.Executor.parseQuery.restore()
           })
 
-          it('should be caught and errored through observable', function(done) {
+          it('should be caught and errored through observable', function (done) {
             var self = this
             var observable = this.executor.observe(this.payload)
             observable.subscribe(noop, onError, noop)
@@ -324,7 +320,7 @@ describe('query-executor', function () {
               done()
             }
           })
-        });
+        })
       })
     })
   })

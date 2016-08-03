@@ -28,6 +28,7 @@ type Subscription {
 
 input UpdateMeInput {
   name: String
+  old: Boolean
   clientMutationId: String!
 }
 

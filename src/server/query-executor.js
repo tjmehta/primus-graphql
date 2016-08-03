@@ -34,8 +34,8 @@ function Executor (spark, opts, primusOpts) {
  * @param {String} graphql query
  * @return {DocumentAST} graphql document ast
  */
-Executor._parseQuery = function (query) {
-  debug('_parseQuery:', query)
+Executor.parseQuery = function (query) {
+  debug('parseQuery:', query)
   var source = new GraphQL.Source(query, 'GraphQL request')
   return GraphQL.parse(source)
 }
@@ -93,7 +93,7 @@ Executor.prototype.execute = function (payload, _rootValue) {
     var context = opts.context
     var rootValue = opts.rootValue
     // parse query
-    var documentAST = Executor._parseQuery(query)
+    var documentAST = Executor.parseQuery(query)
     // validate ast
     Executor._validateAST(documentAST, opts)
     // resolve options
@@ -130,7 +130,7 @@ Executor.prototype.observe = function (payload) {
     var context = opts.context
     var rootValue = opts.rootValue
     // parse query
-    var documentAST = Executor._parseQuery(query)
+    var documentAST = Executor.parseQuery(query)
     // validate ast
     Executor._validateAST(documentAST, opts)
     // resolve options
