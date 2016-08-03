@@ -1,8 +1,8 @@
 require('babel-polyfill')
 
 var afterEach = global.afterEach
-var beforeEach = global.beforeEach
 var before = global.before
+var beforeEach = global.beforeEach
 var describe = global.describe
 var it = global.it
 var Primus = global.Primus
@@ -101,6 +101,7 @@ describe('E2E browser tests', function () {
               firstRender = false
               handleFirstRender(this)
             } else {
+              shimmer.unwrap(UserComponent.prototype, 'render')
               handleSecondRender(this)
             }
             return orig.apply(this, arguments)
@@ -137,6 +138,7 @@ describe('E2E browser tests', function () {
               firstRender = false
               handleFirstRender(this)
             } else {
+              shimmer.unwrap(UserComponent.prototype, 'render')
               handleSecondRender(this)
             }
             return orig.apply(this, arguments)
@@ -152,10 +154,10 @@ describe('E2E browser tests', function () {
           self.disposable = userComponent.props.relay.subscribe(subscription)
           // mutate
           var mutation = new UpdateMeMutation({
-            id: 9999, // incorrect id, so mutation does not trigger second render
             me: userComponent.props.me,
             input: {
-              name: newName
+              name: newName,
+              old: true // force old response
             }
           })
           userComponent.props.relay.commitUpdate(mutation)
@@ -178,6 +180,7 @@ describe('E2E browser tests', function () {
               firstRender = false
               handleFirstRender(this)
             } else {
+              shimmer.unwrap(UserComponent.prototype, 'render')
               handleSecondRender(this)
             }
             return orig.apply(this, arguments)
@@ -192,7 +195,8 @@ describe('E2E browser tests', function () {
           var mutation = new UpdateMeMutation({
             me: userComponent.props.me,
             input: {
-              name: newName
+              name: newName,
+              old: true // force old response
             }
           })
           // hack: make sure mutation does not update props

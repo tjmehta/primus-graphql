@@ -1,11 +1,9 @@
-var duplexify = require('duplexify')
-var expect = require('chai').expect
-var proxyquire = require('proxyquire')
+var keypather = require('keypather')()
 var sinon = require('sinon')
-var through2 = require('through2')
 require('sinon-as-promised')
 
 var SubscribeCallbacks = require('../src/server/subscribe-callbacks')
+var QueryExecutor = require('../src/server/query-executor')
 
 var describe = global.describe
 var it = global.it
@@ -77,9 +75,21 @@ describe('subscribe-callbacks', function () {
     })
 
     describe('onNext', function () {
+      beforeEach(function () {
+        this.subscriptionFieldName = 'subscriptionFieldName'
+        var parsed = {}
+        keypather.set(parsed, 'definitions[0].selectionSet.selections[0].name.value', this.subscriptionFieldName)
+        sinon.stub(QueryExecutor, 'parseQuery').returns(parsed)
+      })
+      afterEach(function () {
+        QueryExecutor.parseQuery.restore()
+      })
+
       it('should send an next-event', function () {
         var self = this
         var next = {}
+        var rootValue = {}
+        rootValue[this.subscriptionFieldName] = next
         var nextPayload = { data: {} }
         this.mocks.queryExecutor.execute.resolves(nextPayload)
         return this.subscribeCallbacks.onNext(next).then(function () {
@@ -87,11 +97,12 @@ describe('subscribe-callbacks', function () {
           var queryExecutor = self.mocks.queryExecutor
           var responder = self.mocks.responder
           sinon.assert.calledOnce(queryExecutor.execute)
-          sinon.assert.calledWith(queryExecutor.execute, self.payload, next)
+          sinon.assert.calledWith(queryExecutor.execute, self.payload, rootValue)
           sinon.assert.calledOnce(responder.sendEvent)
           sinon.assert.calledWith(responder.sendEvent, self.payload.id, 'next', nextPayload.data)
         })
       })
+
       describe('execute fails', function () {
         beforeEach(function () {
           sinon.stub(this.subscribeCallbacks, 'onError')
@@ -103,14 +114,15 @@ describe('subscribe-callbacks', function () {
         it('should send an error-event if execute fails', function () {
           var self = this
           var next = {}
+          var rootValue = {}
+          rootValue[this.subscriptionFieldName] = next
           var err = new Error('boom')
           this.mocks.queryExecutor.execute.rejects(err)
           return this.subscribeCallbacks.onNext(next).then(function () {
             // assertions
             var queryExecutor = self.mocks.queryExecutor
-            var responder = self.mocks.responder
             sinon.assert.calledOnce(queryExecutor.execute)
-            sinon.assert.calledWith(queryExecutor.execute, self.payload, next)
+            sinon.assert.calledWith(queryExecutor.execute, self.payload, rootValue)
             sinon.assert.calledOnce(self.subscribeCallbacks.onError)
             sinon.assert.calledWith(self.subscribeCallbacks.onError, err)
           })

@@ -214,9 +214,7 @@ var UserChangesSubscription = relaySubscription({
       db.ee.on(event + ':completed', subscriber.complete)
       function onNext (user) {
         subscriber.next({
-          userChanges: {
-            me: user
-          }
+          me: user
         })
       }
       if (input.reconnect) {

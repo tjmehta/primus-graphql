@@ -1,5 +1,6 @@
 var EventEmitter = require('events').EventEmitter
 
+var clone = require('101/clone')
 var debug = require('debug')('primus-graphql:fixtures:graphql-schema')
 var GraphQL = require('graphql')
 var listenAll = require('listen-all')
@@ -10,6 +11,7 @@ var RxSubscription = require('rxjs/Subscription').Subscription
 var relaySubscription = require('../../graphql-relay-subscription.js')
 require('../../src/shared/subscription-dispose.js')
 
+var GraphQLBoolean = GraphQL.GraphQLBoolean
 var GraphQLInputObjectType = GraphQL.GraphQLInputObjectType
 var GraphQLSchema = GraphQL.GraphQLSchema
 var GraphQLString = GraphQL.GraphQLString
@@ -48,6 +50,9 @@ var UpdateMeMutation = Relay.mutationWithClientMutationId({
   inputFields: {
     name: {
       type: GraphQLString
+    },
+    old: {
+      type: GraphQLBoolean
     }
   },
   outputFields: {
@@ -58,12 +63,13 @@ var UpdateMeMutation = Relay.mutationWithClientMutationId({
   mutateAndGetPayload (fields, ctx) {
     // hard-coded
     var user = db.users[0]
+    var oldUser = clone(user)
     user.name = fields.name
     // user.name = fields.name
     debug('emit', 'users:' + user.id)
     db.ee.emit('users:' + user.id, user)
     return {
-      user: user,
+      user: fields.old ? oldUser : user,
       clientMutationId: fields.clientMutationId
     }
   }
@@ -82,7 +88,7 @@ var InvalidSubscription = {
   }),
   args: {
     input: {
-      type:  new GraphQLInputObjectType({
+      type: new GraphQLInputObjectType({
         name: invalidName + 'Input',
         fields: {
           id: {
@@ -116,9 +122,7 @@ var UserChanges = relaySubscription({
       db.ee.on(event + ':completed', subscriber.complete)
       function onNext (user) {
         subscriber.next({
-          userChanges: {
-            user: user
-          }
+          user: user
         })
       }
       if (input.reconnect) {

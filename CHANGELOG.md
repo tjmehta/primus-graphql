@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.5
+* Fix: subscriptions observable "next" value does not need to contain subscription name
+* Fix: e2e tests improvements, more robust subscription tests.
+
 ## v1.5.4
 * Fix: default primus-graphql data-payload-key to be "primus-graphql"
 
