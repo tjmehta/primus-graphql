@@ -15,7 +15,7 @@ var not = require('101/not')
 var parseErr = require('error-to-json').parse
 var uuid = require('uuid')
 
-var defaultOpts = require('./default-opts.js')
+var defaultPrimusOpts = require('./default-primus-opts.js')
 var SubscriptionObservable = require('./client/subscription-observable.js')
 // observable operators: used in relay-network-layer, but has to be bundled w/ client
 require('rxjs/add/operator/publish')
@@ -25,7 +25,7 @@ var notEquals = not(equals)
 var resEE = new EventEmitter()
 
 primusOpts = primusOpts || {}
-defaults(primusOpts, defaultOpts)
+defaults(primusOpts, defaultPrimusOpts)
 var key = primusOpts.key
 
 /**

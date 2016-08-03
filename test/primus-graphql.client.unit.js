@@ -9,7 +9,7 @@ var it = global.it
 var beforeEach = global.beforeEach
 var afterEach = global.afterEach
 
-var defaultOpts = require('../src/default-opts.js')
+var defaultPrimusOpts = require('../src/default-primus-opts.js')
 
 var id = 0
 
@@ -66,7 +66,7 @@ describe('primus-graphql client', function () {
       })
 
       it('should send a graphql payload (promise)', function (done) {
-        var key = defaultOpts.key
+        var key = defaultPrimusOpts.key
         var query = 'query ...'
         return this.primus.graphql(query, function (err) {
           expect(err).to.exist()
@@ -90,7 +90,7 @@ describe('primus-graphql client', function () {
       })
 
       it('should send a graphql query/mutation payload (promise)', function () {
-        var key = defaultOpts.key
+        var key = defaultPrimusOpts.key
         var query = 'query ...'
         var vars = { foo: 1 }
         this.primus.graphql(query, vars)
@@ -107,7 +107,7 @@ describe('primus-graphql client', function () {
       })
 
       it('should create return an observable graphql for subscription payload', function () {
-        var key = defaultOpts.key
+        var key = defaultPrimusOpts.key
         var query = 'subscription ...'
         var vars = { foo: 1 }
         var observable = this.primus.graphql(query, vars)
@@ -122,7 +122,7 @@ describe('primus-graphql client', function () {
         sinon.assert.calledOnce(this.primus._observeGraphQL)
         sinon.assert.calledWith(this.primus._observeGraphQL, expected)
         sinon.assert.calledOnce(this.mocks.SubscriptionObservable)
-        sinon.assert.calledWith(this.mocks.SubscriptionObservable, this.primus, this.resEE, expected, defaultOpts)
+        sinon.assert.calledWith(this.mocks.SubscriptionObservable, this.primus, this.resEE, expected, defaultPrimusOpts)
       })
 
       describe('response', function () {
@@ -130,9 +130,9 @@ describe('primus-graphql client', function () {
           var query = 'query ...'
           var vars = { foo: 1 }
           var promise = this.primus.graphql(query, vars)
-          var uuid = this.primus.write.args[0][0][defaultOpts.key].id
+          var uuid = this.primus.write.args[0][0][defaultPrimusOpts.key].id
           var res = {}
-          res[defaultOpts.key] = {
+          res[defaultPrimusOpts.key] = {
             id: uuid,
             data: {},
             statusCode: 200
@@ -140,7 +140,7 @@ describe('primus-graphql client', function () {
           this.primus.emit('data', res)
           sinon.assert.calledOnce(this.resEE.emit)
           return promise.then(function (payload) {
-            expect(payload).to.deep.equal(res[defaultOpts.key])
+            expect(payload).to.deep.equal(res[defaultPrimusOpts.key])
           })
         })
 
@@ -151,11 +151,11 @@ describe('primus-graphql client', function () {
           var res = {}
           this.primus.graphql(query, vars, files, function (err, payload) {
             if (err) { return done(err) }
-            expect(payload).to.deep.equal(res[defaultOpts.key])
+            expect(payload).to.deep.equal(res[defaultPrimusOpts.key])
             done()
           })
-          var uuid = this.primus.write.args[0][0][defaultOpts.key].id
-          res[defaultOpts.key] = {
+          var uuid = this.primus.write.args[0][0][defaultPrimusOpts.key].id
+          res[defaultPrimusOpts.key] = {
             id: uuid,
             data: {},
             statusCode: 200
@@ -170,12 +170,12 @@ describe('primus-graphql client', function () {
           var res = {}
           this.primus.graphql(query, vars, files, function (err, payload) {
             if (err) { return done(err) }
-            expect(payload).to.deep.equal(res[defaultOpts.key])
+            expect(payload).to.deep.equal(res[defaultPrimusOpts.key])
             expect(payload.errors[0]).to.be.an.instanceOf(Error)
             done()
           })
-          var uuid = this.primus.write.args[0][0][defaultOpts.key].id
-          res[defaultOpts.key] = {
+          var uuid = this.primus.write.args[0][0][defaultPrimusOpts.key].id
+          res[defaultPrimusOpts.key] = {
             id: uuid,
             errors: [{
               message: 'message'
@@ -189,7 +189,7 @@ describe('primus-graphql client', function () {
           it('should not attach handler twice', function () {
             var query = 'query ...'
             var vars = { foo: 1 }
-            var key = defaultOpts.key
+            var key = defaultPrimusOpts.key
             // res
             var promise = this.primus.graphql(query, vars)
             var uuid = this.primus.write.args[0][0][key].id

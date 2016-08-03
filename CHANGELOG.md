@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.5.4
+* Fix: default primus-graphql data-payload-key to be "primus-graphql"
+
 ## v1.5.3
 * Fix: improved warning messages for retries
 * Fix: remove graphql from peer deps, as it is optional.
