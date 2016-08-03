@@ -4,7 +4,7 @@ var errToJSON = require('error-to-json')
 var debug = require('debug')('primus-graphql:server')
 var defaults = require('101/defaults')
 
-var defaultOpts = require('./default-opts.js')
+var defaultPrimusOpts = require('./default-primus-opts.js')
 var DataHandler = require('./server/data-handler.js')
 
 module.exports = createServerPlugin
@@ -27,7 +27,7 @@ function createServerPlugin (opts) {
   })
   return function serverPlugin (Primus, primusOpts) {
     primusOpts = primusOpts || {}
-    defaults(primusOpts, defaultOpts)
+    defaults(primusOpts, defaultPrimusOpts)
     // setup opts on spark - used in handleData
     Primus.Spark.prototype.__graphql = {
       opts: opts,
