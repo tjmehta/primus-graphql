@@ -11,7 +11,7 @@ var beforeEach = global.beforeEach
 var afterEach = global.afterEach
 
 var createServerPlugin = require('../src/primus-graphql.server.js')
-var defaultOpts = require('../src/default-opts.js')
+var defaultPrimusOpts = require('../src/default-primus-opts.js')
 var schema = require('./fixtures/graphql-schema.js')
 
 describe('primus-graphql server', function () {
@@ -77,7 +77,7 @@ describe('primus-graphql server', function () {
         var spark = this.spark
         spark.graphql()
         var data = {}
-        data[defaultOpts.key] = {}
+        data[defaultPrimusOpts.key] = {}
         spark.emit('data', data)
         sinon.assert.calledOnce(this.mocks.dataHandler.handleData)
         sinon.assert.calledWith(this.mocks.dataHandler.handleData, data)
