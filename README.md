@@ -117,10 +117,6 @@ primus.use('graphql', primusGraphQL({
   },
   validationRules: [/* additional validation rules */]
 }))
-
-primus.on('connection', function (spark) {
-  spark.graphql()
-})
 ```
 
 ##### Options

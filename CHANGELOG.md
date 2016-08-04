@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.0
+* Feature: auto-setup primus-graphql with primus.use
+* Feature: added `primus.graphql()` to attach connection/disconnection handlers
+* Fix: fixed potential active-subscription memory leak
+* Fix: standard lint
+
 ## v1.5.5
 * Fix: subscriptions observable "next" value does not need to contain subscription name
 * Fix: e2e tests improvements, more robust subscription tests.

@@ -23,7 +23,6 @@ function createPrimus (server, pluginOpts) {
   primus.on('connection', function (spark) {
     debug('spark connected %o', spark.id)
     primus.__sparks.push(spark)
-    spark.graphql()
   })
 
   primus.on('disconnection', function (spark) {

@@ -1,7 +1,3 @@
-var EventEmitter = require('events').EventEmitter
-
-var assign = require('101/assign')
-var omit = require('101/omit')
 var errToJSON = require('error-to-json')
 var sinon = require('sinon')
 require('sinon-as-promised')
@@ -66,7 +62,7 @@ describe('responder', function () {
       sinon.assert.calledWith(spark.write, expectedData)
     })
 
-    describe('formatError err', function() {
+    describe('formatError err', function () {
       beforeEach(function () {
         this.err = new Error('format error')
         // cache and replace
@@ -77,7 +73,7 @@ describe('responder', function () {
         this.opts.formatError.restore()
       })
 
-      it('should catch formatError errors', function() {
+      it('should catch formatError errors', function () {
         var id = 'id'
         var statusCode = 401
         var errors = [ new Error('message') ]

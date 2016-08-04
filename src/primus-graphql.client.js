@@ -82,7 +82,7 @@ primus.graphql = function (query, vars, files, operationName, cb) {
     var writeSuccess = primus.write(data)
     if (!writeSuccess) {
       // Request failed
-      var err = new Error('primus-graphql: write failed')
+      err = new Error('primus-graphql: write failed')
       return maybe(cb, Promise.reject(err))
     }
     // Response promise

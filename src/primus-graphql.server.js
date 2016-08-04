@@ -4,6 +4,7 @@ var errToJSON = require('error-to-json')
 var debug = require('debug')('primus-graphql:server')
 var defaults = require('101/defaults')
 
+var activeSubscription = require('./server/active-subscriptions.js')
 var defaultPrimusOpts = require('./default-primus-opts.js')
 var DataHandler = require('./server/data-handler.js')
 
@@ -25,15 +26,15 @@ function createServerPlugin (opts) {
     formatError: errToJSON,
     validationRules: []
   })
-  return function serverPlugin (Primus, primusOpts) {
+  return function serverPlugin (primus, primusOpts) {
     primusOpts = primusOpts || {}
     defaults(primusOpts, defaultPrimusOpts)
     // setup opts on spark - used in handleData
-    Primus.Spark.prototype.__graphql = {
+    primus.Spark.prototype.__graphql = {
       opts: opts,
       primusOpts: primusOpts
     }
-    Primus.Spark.prototype.graphql = function () {
+    primus.Spark.prototype.graphql = function () {
       debug('graphql')
       var spark = this
       if (!spark.__graphqlDataHandler) {
@@ -43,5 +44,17 @@ function createServerPlugin (opts) {
         spark.on('close', dataHandler.handleClose)
       }
     }
+    primus.graphql = function () {
+      if (!this.__graphqlListening) {
+        this.__graphqlListening = true
+        this.on('connection', function (spark) {
+          spark.graphql()
+        })
+        this.on('disconnection', function (spark) {
+          activeSubscription.removeAll(spark.id)
+        })
+      }
+    }
+    primus.graphql()
   }
 }

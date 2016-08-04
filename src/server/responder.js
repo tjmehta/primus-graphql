@@ -2,7 +2,6 @@ var assert = require('assert')
 
 var assign = require('101/assign')
 var debug = require('debug')('primus-graphql:responder')
-var omit = require('101/omit')
 
 module.exports = Responder
 
