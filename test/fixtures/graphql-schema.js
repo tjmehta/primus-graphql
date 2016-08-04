@@ -69,8 +69,7 @@ var UpdateMeMutation = Relay.mutationWithClientMutationId({
     debug('emit', 'users:' + user.id)
     db.ee.emit('users:' + user.id, user)
     return {
-      user: fields.old ? oldUser : user,
-      clientMutationId: fields.clientMutationId
+      user: fields.old ? oldUser : user
     }
   }
 })

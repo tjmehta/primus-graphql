@@ -111,7 +111,7 @@ describe('subscription-observable', function () {
             onError: sinon.stub(),
             onCompleted: sinon.stub()
           }
-          var s = this.observable.subscribe(
+          this.observable.subscribe(
             callbacks.onNext,
             callbacks.onError,
             callbacks.onCompleted

@@ -98,25 +98,25 @@ SubscriptionObservable.prototype._onData = function (payload) {
   } else if (payload.event === 'error') {
     // error
     var errors = payload.errors.map(parseErr)
-    function getErr (errors) {
-      var err
-      if (errors.length === 1) {
-        err = errors[0]
-        if (err.errors) {
-          return getErr(err.errors.map(parseErr))
-        }
-      } else {
-        err = new Error('multiple errors')
-        err.errors = errors
-      }
-      return err
-    }
     var err = getErr(errors)
     this._observer.error(err)
-  } else {// if (payload.event === 'completed') {
+  } else { // if (payload.event === 'completed') {
     assert(payload.event === 'completed', 'unknown event: ' + payload.event)
     // complete
     this._observer.complete()
+  }
+  function getErr (errors) {
+    var err
+    if (errors.length === 1) {
+      err = errors[0]
+      if (err.errors) {
+        return getErr(err.errors.map(parseErr))
+      }
+    } else {
+      err = new Error('multiple errors')
+      err.errors = errors
+    }
+    return err
   }
 }
 

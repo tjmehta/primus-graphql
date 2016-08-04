@@ -2,8 +2,6 @@ var assert = require('assert')
 
 var castArr = require('cast-array')
 var debug = require('debug')('primus-graphql:active-subscriptions')
-var forEach = require('object-loops/for-each')
-var isEmpty = require('101/is-empty')
 
 var isRxSubscription = require('./is-rx-subscription.js')
 
@@ -32,15 +30,19 @@ ActiveSubscriptions.prototype.add = function (connId, payloadId, subscription) {
  */
 ActiveSubscriptions.prototype.remove = function (connId, payloadId) {
   debug('remove subscription:', connId, payloadId)
-  var subscription = this._get([connId, payloadId])
+  var subscriptions = this._get(connId)
+  var subscription = subscriptions[payloadId]
   debug('unsubscribe subscription, found?', connId, payloadId, !!subscription)
   if (subscription) {
     debug('unsubscribe subscription', connId, payloadId)
     subscription.unsubscribe()
+    delete subscriptions[payloadId]
   }
-  this._del(connId)
+  if (Object.keys(subscriptions).length === 0) {
+    this._del(connId)
+  }
   /* istanbul ignore next */
-  debug('subscriptions')
+  debug('subscriptions', debug.enabled && Object.keys(this._subscriptionsByConn))
 }
 
 /**
@@ -49,11 +51,13 @@ ActiveSubscriptions.prototype.remove = function (connId, payloadId) {
  */
 ActiveSubscriptions.prototype.removeAll = function (connId) {
   debug('remove all subscriptions:', connId)
+  var self = this
   var subscriptions = this._get(connId)
-  forEach(subscriptions, function (subscription) {
-    subscription.unsubscribe()
+  Object.keys(subscriptions).forEach(function (payloadId) {
+    self.remove(connId, payloadId)
   })
-  this._del(connId)
+  /* istanbul ignore next */
+  debug('subscriptions', debug.enabled && Object.keys(this._subscriptionsByConn))
 }
 
 // subscription-store private methods
@@ -61,12 +65,9 @@ ActiveSubscriptions.prototype._del = function (rootKey) {
   debug('_del:', rootKey)
   delete this._subscriptionsByConn[rootKey]
 }
-ActiveSubscriptions.prototype._get = function (keys) {
-  debug('_get:', keys)
-  keys = castArr(keys)
-  return keys.reduce(function (val, key) {
-    return val && val[key]
-  }, this._subscriptionsByConn)
+ActiveSubscriptions.prototype._get = function (rootKey) {
+  debug('_get:', rootKey)
+  return this._subscriptionsByConn[rootKey] || {}
 }
 ActiveSubscriptions.prototype._set = function (keys, val) {
   debug('_set:', keys)

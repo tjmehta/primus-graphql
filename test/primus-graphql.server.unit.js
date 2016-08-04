@@ -10,6 +10,7 @@ var it = global.it
 var beforeEach = global.beforeEach
 var afterEach = global.afterEach
 
+var activeSubscriptions = require('../src/server/active-subscriptions.js')
 var createServerPlugin = require('../src/primus-graphql.server.js')
 var defaultPrimusOpts = require('../src/default-primus-opts.js')
 var schema = require('./fixtures/graphql-schema.js')
@@ -47,21 +48,23 @@ describe('primus-graphql server', function () {
         validationRules: ['hey']
       }
       this.plugin = createServerPlugin(this.opts)
-      this.MockPrimus = {}
+      this.mockPrimus = new EventEmitter()
       this.MockSpark = function () {}
       this.MockSpark.prototype = new EventEmitter()
-      this.MockPrimus.Spark = this.MockSpark
+      this.mockPrimus.Spark = this.MockSpark
     })
 
-    it('should extend Spark', function () {
-      this.plugin(this.MockPrimus)
+    it('should extend Spark and attach listeners', function () {
+      this.plugin(this.mockPrimus)
       expect(this.MockSpark.prototype.graphql).to.exist()
       expect(this.MockSpark.prototype.graphql).to.be.a.function()
+      expect(this.mockPrimus.listeners('connection').length).to.equal(1)
+      expect(this.mockPrimus.listeners('disconnection').length).to.equal(1)
     })
 
     describe('spark.graphql()', function () {
       beforeEach(function () {
-        this.plugin(this.MockPrimus)
+        this.plugin(this.mockPrimus)
         this.spark = new this.MockSpark()
       })
 
@@ -81,6 +84,51 @@ describe('primus-graphql server', function () {
         spark.emit('data', data)
         sinon.assert.calledOnce(this.mocks.dataHandler.handleData)
         sinon.assert.calledWith(this.mocks.dataHandler.handleData, data)
+      })
+    })
+
+    describe('primus.graphql()', function () {
+      beforeEach(function () {
+        this.mockPrimus = new EventEmitter()
+        this.mockPrimus.__graphqlListening = true
+        this.MockSpark = function () {}
+        this.MockSpark.prototype = new EventEmitter()
+        this.mockPrimus.Spark = this.MockSpark
+        this.plugin(this.mockPrimus)
+        this.mockPrimus.__graphqlListening = false
+        this.spark = new this.MockSpark()
+        sinon.stub(this.spark, 'graphql')
+        sinon.stub(activeSubscriptions, 'removeAll')
+      })
+      afterEach(function () {
+        activeSubscriptions.removeAll.restore()
+      })
+
+      it('should not attach handler twice', function () {
+        var primus = this.mockPrimus
+        expect(primus.listeners('connection').length).to.equal(0)
+        expect(primus.listeners('disconnection').length).to.equal(0)
+        primus.graphql()
+        expect(primus.listeners('connection').length).to.equal(1)
+        expect(primus.listeners('disconnection').length).to.equal(1)
+        primus.graphql()
+        expect(primus.listeners('connection').length).to.equal(1)
+        expect(primus.listeners('disconnection').length).to.equal(1)
+      })
+
+      it('should handle connections and invoke graphql to attach "dataHandler"', function () {
+        var primus = this.mockPrimus
+        primus.graphql()
+        primus.emit('connection', this.spark)
+        sinon.assert.calledOnce(this.spark.graphql)
+      })
+
+      it('should handle disconnections by removing all active-subscriptions for spark', function () {
+        var primus = this.mockPrimus
+        primus.graphql()
+        primus.emit('disconnection', this.spark)
+        sinon.assert.calledOnce(activeSubscriptions.removeAll)
+        sinon.assert.calledWith(activeSubscriptions.removeAll, this.spark.id)
       })
     })
   })

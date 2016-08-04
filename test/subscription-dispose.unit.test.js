@@ -2,6 +2,9 @@ var expect = require('code').expect
 var proxyquire = require('proxyquire')
 var sinon = require('sinon')
 
+var describe = global.describe
+var it = global.it
+
 describe('subscription-dispose', function () {
   it('should add dispose', function () {
     var Subscription = function () {}
