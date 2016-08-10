@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6.2
+* Fix: query-executor changes not published (not built)
+
 ## v1.6.1
 * Fix: handle edgecase where uncaught (by promise) runtime errors in query "resolve" (and subscription "observe") would be set as `data.data`
 

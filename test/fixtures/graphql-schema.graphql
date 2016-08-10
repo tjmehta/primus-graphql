@@ -16,6 +16,15 @@ type Mutation {
   updateMe(input: UpdateMeInput!): UpdateMePayload
 }
 
+input ObserveThrowsInput {
+  id: String!
+  reconnect: Boolean
+}
+
+type ObserveThrowsOutput {
+  user: User
+}
+
 type Query {
   me: User
 }
@@ -24,6 +33,7 @@ type Subscription {
   userChanges(input: UserChangesInput!): UserChangesOutput
   userChangesPromise(input: UserChangesPromiseInput!): UserChangesPromiseOutput
   invalidSubscription(input: InvalidSubscriptionInput): InvalidSubscriptionOutput
+  observeThrows(input: ObserveThrowsInput!): ObserveThrowsOutput
 }
 
 input UpdateMeInput {
