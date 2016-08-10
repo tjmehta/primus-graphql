@@ -13,6 +13,12 @@ require('sinon-as-promised')
 var Executor = require('../src/server/query-executor.js')
 var schema = require('./fixtures/graphql-schema.js')
 
+var expectNotCalled = function (name, done) {
+  return function () {
+    done(new Error('expected "' + name + '" not to be called'))
+  }
+}
+
 describe('query-executor', function () {
   describe('query-executor unit', function () {
     beforeEach(function () {
@@ -150,11 +156,12 @@ describe('query-executor', function () {
           })
         })
 
-        describe('error', function () {
+        describe('graphql error', function () {
           beforeEach(function () {
             this.parseErr = new Error('boom')
             this.Executor.parseQuery.throws(this.parseErr)
           })
+
           it('should catch errors and promise.reject them', function (done) {
             var self = this
             var spark = {}
@@ -249,25 +256,27 @@ describe('query-executor', function () {
       })
 
       describe('errors', function () {
-        beforeEach(function () {
-          this.payload.query = this.payload.query.replace(/userChanges/, 'invalidSubscription')
-          this.payload.query = this.payload.query.replace(/UserChangesInput/, 'InvalidSubscriptionInput')
-        })
+        describe('no "observe" method', function () {
+          beforeEach(function () {
+            this.payload.query = this.payload.query.replace(/userChanges/, 'invalidSubscription')
+            this.payload.query = this.payload.query.replace(/UserChangesInput/, 'InvalidSubscriptionInput')
+          })
 
-        it('should throw error if subscription does not have "observe"', function (done) {
-          var observable = this.executor.observe(this.payload)
-          observable.subscribe(noop, onError, noop)
-          function onError (err) {
-            try {
-              expect(err.message).to.equal('"invalidSubscription" does not have an observe function')
-            } catch (err) {
-              return done(err)
+          it('should throw error if subscription does not have "observe"', function (done) {
+            var observable = this.executor.observe(this.payload)
+            observable.subscribe(noop, onError, noop)
+            function onError (err) {
+              try {
+                expect(err.message).to.equal('"invalidSubscription" does not have an observe function')
+              } catch (err) {
+                return done(err)
+              }
+              done()
             }
-            done()
-          }
+          })
         })
 
-        describe('runtime error', function () {
+        describe('graphql runtime error', function () {
           beforeEach(function () {
             this.err = new Error('boom')
             sinon.stub(this.Executor, 'parseQuery').throws(this.err)
@@ -288,6 +297,31 @@ describe('query-executor', function () {
               }
               done()
             }
+          })
+        })
+
+        describe('schema "observe" runtime error', function () {
+          beforeEach(function () {
+            this.payload.query = this.payload.query.replace(/userChanges/, 'observeThrows')
+            this.payload.query = this.payload.query.replace(/UserChangesInput/, 'ObserveThrowsInput')
+          })
+
+          it('should catch runtime errors w/in "observe" method', function (done) {
+            var observable = this.executor.observe(this.payload)
+            expect(observable).to.exist()
+            expect(observable.subscribe).to.exist()
+            observable.subscribe(
+              expectNotCalled('onNext', done),
+              function (err) {
+                try {
+                  expect(err).to.exist()
+                  expect(err.message).to.equal('observe error')
+                  done()
+                } catch (err) {
+                  done(err)
+                }
+              },
+              expectNotCalled('onCompleted', done))
           })
         })
 

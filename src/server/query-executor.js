@@ -8,6 +8,9 @@ var StaticObservable = require('static-observable')
 var graphqlObserve = require('./graphql-observe.js')
 
 var checkForPayloadErrors = function (data) {
+  if (data.data instanceof Error) {
+    throw data.data
+  }
   if (data.errors) {
     if (data.errors.length === 1) {
       throw data.errors[0]

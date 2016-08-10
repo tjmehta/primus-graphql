@@ -99,6 +99,23 @@ var InvalidSubscription = {
   }
 }
 
+var ObserveThrows = relaySubscription({
+  name: 'ObserveThrows',
+  inputFields: {
+    id: {
+      type: new GraphQLNonNull(GraphQLString)
+    }
+  },
+  outputFields: {
+    user: {
+      type: UserType
+    }
+  },
+  observe: () => {
+    throw new Error('observe error')
+  }
+})
+
 var UserChanges = relaySubscription({
   name: 'UserChanges',
   inputFields: {
@@ -215,7 +232,8 @@ var Subscription = new GraphQLObjectType({
   fields: {
     userChanges: UserChanges,
     userChangesPromise: UserChangesPromise,
-    invalidSubscription: InvalidSubscription
+    invalidSubscription: InvalidSubscription,
+    observeThrows: ObserveThrows
   }
 })
 
