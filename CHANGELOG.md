@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6.1
+* Fix: handle edgecase where uncaught (by promise) runtime errors in query "resolve" (and subscription "observe") would be set as `data.data`
+
 ## v1.6.0
 * Feature: auto-setup primus-graphql with primus.use
 * Feature: added `primus.graphql()` to attach connection/disconnection handlers
