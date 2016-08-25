@@ -2,8 +2,12 @@ var assert = require('assert')
 var debug = require('debug')('primus-graphql:query-executor')
 var isFunction = require('101/is-function')
 var GraphQL = require('graphql')
+var Observable = require('rxjs/Observable').Observable
+var pluck = require('101/pluck')
 var PromisedObservable = require('promised-observable')
 var StaticObservable = require('static-observable')
+require('rxjs/add/observable/fromPromise')
+require('rxjs/add/operator/mergeMap')
 
 var graphqlObserve = require('./graphql-observe.js')
 
@@ -123,6 +127,7 @@ Executor.prototype.observe = function (payload) {
   debug('observe:', payload.id, payload.query, payload.variables)
   assert(payload.query, '"query" is required')
   try {
+    var self = this
     var spark = this._spark
     var opts = this._opts
     // payload parts
@@ -134,6 +139,7 @@ Executor.prototype.observe = function (payload) {
     var rootValue = opts.rootValue
     // parse query
     var documentAST = Executor.parseQuery(query)
+    var subscriptionFieldName = documentAST.definitions[0].selectionSet.selections[0].name.value
     // validate ast
     Executor._validateAST(documentAST, opts)
     // resolve options
@@ -145,7 +151,14 @@ Executor.prototype.observe = function (payload) {
       checkForPayloadErrors(data)
       return data.data
     })
-    return new PromisedObservable(promise)
+    return new PromisedObservable(promise).mergeMap(function (next) {
+      // note: `subscriptionFieldName` "put", should technically be implemented in `graphqlObserve`
+      var rootValue = {}
+      rootValue[subscriptionFieldName] = next
+      debug('graphqlObserve: execute next', rootValue, next)
+      var promise = self.execute(payload, rootValue).then(pluck('data'))
+      return Observable.fromPromise(promise)
+    })
   } catch (err) {
     return StaticObservable.error(err)
   }

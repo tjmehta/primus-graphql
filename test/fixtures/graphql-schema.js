@@ -1,13 +1,11 @@
-var EventEmitter = require('events').EventEmitter
-
 var clone = require('101/clone')
 var debug = require('debug')('primus-graphql:fixtures:graphql-schema')
 var GraphQL = require('graphql')
-var listenAll = require('listen-all')
 var Observable = require('rxjs/Observable').Observable
 var Relay = require('graphql-relay')
 var RxSubscription = require('rxjs/Subscription').Subscription
 
+var db = require('./mem-db.js') // In memory database
 var relaySubscription = require('../../graphql-relay-subscription.js')
 require('../../src/shared/subscription-dispose.js')
 
@@ -25,22 +23,14 @@ var UserType = new GraphQLObjectType({
   description: 'user',
   fields: {
     id: { type: GraphQLString },
-    name: { type: GraphQLString }
+    name: { type: GraphQLString },
+    idAndName: {
+      type: GraphQLString,
+      resolve: function (user) {
+        return user.id + ':' + user.name
+      }
+    }
   }
-})
-
-// In memory database
-
-var db = {}
-db.users = [
-  {
-    id: '0',
-    name: 'name0'
-  }
-]
-db.ee = new EventEmitter()
-listenAll(db.ee, function () {
-  debug('db event', arguments)
 })
 
 // GraphQL roots
@@ -178,10 +168,9 @@ var UserChangesPromise = relaySubscription({
       db.ee.on(event + ':error', subscriber.error)
       db.ee.on(event + ':completed', subscriber.complete)
       function onNext (user) {
+        debug('onNext', user)
         subscriber.next({
-          userChanges: {
-            user: user
-          }
+          user: user
         })
       }
       if (input.reconnect) {
@@ -197,6 +186,7 @@ var UserChangesPromise = relaySubscription({
         db.ee.removeListener(event + ':completed', subscriber.complete)
       })
     })
+    // promise
     return Promise.resolve(observable)
   }
 })

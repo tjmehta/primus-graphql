@@ -3,13 +3,17 @@ var it = global.it
 var beforeEach = global.beforeEach
 var afterEach = global.afterEach
 
+var callbackCount = require('callback-count')
 var expect = require('code').expect
 var once = require('once')
 var noop = require('101/noop')
+var pluck = require('101/pluck')
 var proxyquire = require('proxyquire')
+var put = require('101/put')
 var sinon = require('sinon')
 require('sinon-as-promised')
 
+var db = require('./fixtures/mem-db.js')
 var Executor = require('../src/server/query-executor.js')
 var schema = require('./fixtures/graphql-schema.js')
 
@@ -201,7 +205,9 @@ describe('query-executor', function () {
           'subscription userSubscription ($input: UserChangesInput!) {',
           '  userChanges (input: $input) {',
           '    user {',
+          '      id',
           '      name',
+          '      idAndName',
           '    }',
           '  }',
           '}'
@@ -252,6 +258,56 @@ describe('query-executor', function () {
             },
             noop)
           setTimeout(safeDone, 100)
+        })
+
+        it('should map nexts to graphql-resolve', function (done) {
+          var safeDone = once(done)
+          var observable = this.executor.observe(this.payload)
+          expect(observable).to.exist()
+          expect(observable.subscribe).to.exist()
+          var countNext = callbackCount(3, assertAndDone).next
+          observable.subscribe(
+            function (next) {
+              countNext(null, next)
+            },
+            function (err) {
+              err.errors
+                ? safeDone(err.errors[0])
+                : safeDone(err)
+            },
+            noop)
+          // emulate user change db event
+          var userId = this.payload.variables.input.id + '' // string
+          var changes = [
+            {
+              id: userId,
+              name: 'newName1'
+            },
+            {
+              id: userId,
+              name: 'newName2'
+            },
+            {
+              id: userId,
+              name: 'newName3'
+            }
+          ]
+          setTimeout(function () {
+            changes.forEach(function (change) {
+              db.ee.emit('users:' + userId, change)
+            })
+          }, 10)
+          function assertAndDone (err, results) {
+            if (err) { return done(err) }
+            expect(results.map(pluck('[0]'))).to.deep.equal(changes.map(function (change) {
+              return {
+                userChangesPromise: {
+                  user: put(change, 'idAndName', change.id + ':' + change.name)
+                }
+              }
+            }), { prototype: false })
+            done()
+          }
         })
       })
 
