@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6.4
+* Fix: remove subscription from active-subscriptions onCompleted/onError
+
 ## v1.6.3
 * Improvement: moved "subscribe callbacks onNext graphql-execute mapping" for subscription to query-executor.
 
