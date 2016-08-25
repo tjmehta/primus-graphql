@@ -11,6 +11,7 @@ var url = require('url')
 
 var expect = require('chai').expect
 var filter = require('object-loops/filter')
+var once = require('once')
 var Relay = require('react-relay')
 var render = require('react-dom').render
 var shimmer = require('shimmer')
@@ -174,14 +175,16 @@ describe('E2E browser tests', function () {
         var newName = uuid()
         // wrap render to watch for changes
         var firstRender = true
+        var handleFirst = once(handleFirstRender)
+        var handleSecond = once(handleSecondRender)
         shimmer.wrap(UserComponent.prototype, 'render', function (orig) {
           return function () {
             if (firstRender) {
               firstRender = false
-              handleFirstRender(this)
+              handleFirst(this)
             } else {
               shimmer.unwrap(UserComponent.prototype, 'render')
-              handleSecondRender(this)
+              handleSecond(this)
             }
             return orig.apply(this, arguments)
           }

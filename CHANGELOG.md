@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6.3
+* Improvement: moved "subscribe callbacks onNext graphql-execute mapping" for subscription to query-executor.
+
 ## v1.6.2
 * Fix: query-executor changes not published (not built)
 

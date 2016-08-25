@@ -50,6 +50,7 @@ type UpdateMePayload {
 type User {
   id: String
   name: String
+  idAndName: String
 }
 
 input UserChangesInput {
