@@ -26,7 +26,7 @@ function DataHandler (spark, opts, primusOpts) {
  * handle data connection close
  */
 DataHandler.prototype.handleClose = function () {
-  activeSubscriptions.removeAll(this._spark.id)
+  activeSubscriptions.unsubscribeAll(this._spark.id)
 }
 
 /**
@@ -67,7 +67,7 @@ DataHandler.prototype._handleEvent = function (payload) {
   debug('_handleEvent:', payload)
   if (payload.event === 'unsubscribe') {
     debug('unsubscribe event', payload.id)
-    activeSubscriptions.remove(this._spark.id, payload.id)
+    activeSubscriptions.unsubscribe(this._spark.id, payload.id)
   } else {
     debug('invalid event payload', payload)
   }
@@ -104,6 +104,10 @@ DataHandler.prototype._handleSubscription = function (payload) {
     callbacks.onError,
     callbacks.onCompleted
   )
+  rxSubscription.add(function () {
+    // on unsubscribe
+    activeSubscriptions.remove(spark.id, payload.id)
+  })
   activeSubscriptions.add(spark.id, payload.id, rxSubscription)
   return rxSubscription
 }

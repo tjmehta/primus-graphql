@@ -2,6 +2,7 @@ var duplexify = require('duplexify')
 var expect = require('chai').expect
 var proxyquire = require('proxyquire')
 var sinon = require('sinon')
+var Subscription = require('rxjs/Subscription').Subscription
 var through2 = require('through2')
 require('sinon-as-promised')
 
@@ -18,7 +19,8 @@ describe('data-handler', function () {
       activeSubscriptions: {
         add: sinon.stub(),
         remove: sinon.stub(),
-        removeAll: sinon.stub()
+        unsubscribe: sinon.stub(),
+        unsubscribeAll: sinon.stub()
       },
       queryExecutor: {
         execute: sinon.stub(),
@@ -87,12 +89,12 @@ describe('data-handler', function () {
     })
 
     describe('handleClose', function () {
-      it('should remove all connection\'s subscriptions', function () {
+      it('should unsubscribe all connection\'s subscriptions', function () {
         this.dataHandler.handleClose()
         // assertions
         var activeSubscriptions = this.mocks.activeSubscriptions
-        sinon.assert.calledOnce(activeSubscriptions.removeAll)
-        sinon.assert.calledWith(activeSubscriptions.removeAll, this.spark.id)
+        sinon.assert.calledOnce(activeSubscriptions.unsubscribeAll)
+        sinon.assert.calledWith(activeSubscriptions.unsubscribeAll, this.spark.id)
       })
     })
 
@@ -241,8 +243,8 @@ describe('data-handler', function () {
         }
         this.dataHandler._handleEvent(payload)
         var activeSubscriptions = this.mocks.activeSubscriptions
-        sinon.assert.calledOnce(activeSubscriptions.remove)
-        sinon.assert.calledWith(activeSubscriptions.remove, this.spark.id, payload.id)
+        sinon.assert.calledOnce(activeSubscriptions.unsubscribe)
+        sinon.assert.calledWith(activeSubscriptions.unsubscribe, this.spark.id, payload.id)
       })
 
       it('should do nothing for unknown events', function () {
@@ -252,7 +254,7 @@ describe('data-handler', function () {
         }
         this.dataHandler._handleEvent(payload)
         var activeSubscriptions = this.mocks.activeSubscriptions
-        sinon.assert.notCalled(activeSubscriptions.remove)
+        sinon.assert.notCalled(activeSubscriptions.unsubscribe)
       })
     })
 
@@ -286,9 +288,9 @@ describe('data-handler', function () {
 
     describe('_handleSubscription', function () {
       beforeEach(function () {
-        this.mocks.subscription = {
-          unsubscribe: sinon.stub()
-        }
+        var sub = this.mocks.subscription = new Subscription()
+        sinon.spy(sub, 'add')
+        sinon.spy(sub, 'unsubscribe')
         this.mocks.observable = {
           subscribe: sinon.stub().returns(this.mocks.subscription)
         }
@@ -311,10 +313,23 @@ describe('data-handler', function () {
           callbacks.onNext,
           callbacks.onError,
           callbacks.onCompleted)
+        sinon.assert.calledOnce(subscription.add)
+        sinon.assert.calledWith(subscription.add, sinon.match.func)
         var activeSubscriptions = this.mocks.activeSubscriptions
         sinon.assert.calledOnce(activeSubscriptions.add)
         sinon.assert.calledWith(activeSubscriptions.add,
           this.spark.id, payload.id, subscription)
+      })
+
+      it('should attach activeSubscriptions.remove to unsubscribe', function () {
+        var payload = { id: 'id' }
+        var ret = this.dataHandler._handleSubscription(payload)
+        var subscription = this.mocks.subscription
+        expect(ret).to.equal(subscription)
+        sinon.assert.notCalled(this.mocks.activeSubscriptions.remove)
+        subscription.unsubscribe()
+        sinon.assert.calledOnce(this.mocks.activeSubscriptions.remove)
+        sinon.assert.calledWith(this.mocks.activeSubscriptions.remove, this.spark.id, payload.id)
       })
     })
   })

@@ -98,10 +98,10 @@ describe('primus-graphql server', function () {
         this.mockPrimus.__graphqlListening = false
         this.spark = new this.MockSpark()
         sinon.stub(this.spark, 'graphql')
-        sinon.stub(activeSubscriptions, 'removeAll')
+        sinon.stub(activeSubscriptions, 'unsubscribeAll')
       })
       afterEach(function () {
-        activeSubscriptions.removeAll.restore()
+        activeSubscriptions.unsubscribeAll.restore()
       })
 
       it('should not attach handler twice', function () {
@@ -127,8 +127,8 @@ describe('primus-graphql server', function () {
         var primus = this.mockPrimus
         primus.graphql()
         primus.emit('disconnection', this.spark)
-        sinon.assert.calledOnce(activeSubscriptions.removeAll)
-        sinon.assert.calledWith(activeSubscriptions.removeAll, this.spark.id)
+        sinon.assert.calledOnce(activeSubscriptions.unsubscribeAll)
+        sinon.assert.calledWith(activeSubscriptions.unsubscribeAll, this.spark.id)
       })
     })
   })
