@@ -24,20 +24,14 @@ ActiveSubscriptions.prototype.add = function (connId, payloadId, subscription) {
 }
 
 /**
- * add subscription to active-subscriptions
+ * unsubscribe subscription. this will trigger removal from active-subscriptions (data-handler.js: rxSubscription.add)
  * @param {String} connId  connection id
  * @param {String} payloadId  payload id of subscription (subscription id)
  */
 ActiveSubscriptions.prototype.remove = function (connId, payloadId) {
   debug('remove subscription:', connId, payloadId)
   var subscriptions = this._get(connId)
-  var subscription = subscriptions[payloadId]
-  debug('unsubscribe subscription, found?', connId, payloadId, !!subscription)
-  if (subscription) {
-    debug('unsubscribe subscription', connId, payloadId)
-    subscription.unsubscribe()
-    delete subscriptions[payloadId]
-  }
+  delete subscriptions[payloadId]
   if (Object.keys(subscriptions).length === 0) {
     this._del(connId)
   }
@@ -46,15 +40,29 @@ ActiveSubscriptions.prototype.remove = function (connId, payloadId) {
 }
 
 /**
- * remove all subscriptions for connId
+ * unsubscribe all subscriptions for connId
  * @param {String} connId  connection id
  */
-ActiveSubscriptions.prototype.removeAll = function (connId) {
-  debug('remove all subscriptions:', connId)
-  var self = this
+ActiveSubscriptions.prototype.unsubscribe = function (connId, payloadId) {
+  debug('unsubscribe:', connId, payloadId)
+  var sub = this._get(connId)[payloadId]
+  if (sub) {
+    sub.unsubscribe()
+  }
+  /* istanbul ignore next */
+  debug('subscriptions', debug.enabled && Object.keys(this._subscriptionsByConn))
+}
+
+/**
+ * unsubscribe all subscriptions for connId
+ * @param {String} connId  connection id
+ */
+ActiveSubscriptions.prototype.unsubscribeAll = function (connId) {
+  debug('unsubscribe all:', connId)
   var subscriptions = this._get(connId)
   Object.keys(subscriptions).forEach(function (payloadId) {
-    self.remove(connId, payloadId)
+    var sub = subscriptions[payloadId]
+    sub.unsubscribe()
   })
   /* istanbul ignore next */
   debug('subscriptions', debug.enabled && Object.keys(this._subscriptionsByConn))

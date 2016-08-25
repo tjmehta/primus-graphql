@@ -51,7 +51,7 @@ function createServerPlugin (opts) {
           spark.graphql()
         })
         this.on('disconnection', function (spark) {
-          activeSubscription.removeAll(spark.id)
+          activeSubscription.unsubscribeAll(spark.id)
         })
       }
     }
