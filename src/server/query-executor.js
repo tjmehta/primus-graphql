@@ -87,7 +87,7 @@ Executor._validateAST = function (documentAST, opts) {
  * @param {Object} payload  primus-graphql query payload
  * @return {Promise<Object,Error>} query result
  */
-Executor.prototype.execute = function (payload, _rootValue) {
+Executor.prototype.execute = function (payload, _documentAST, _rootValue, _context) {
   debug('execute:', payload)
   var spark = this._spark
   var opts = this._opts
@@ -100,11 +100,11 @@ Executor.prototype.execute = function (payload, _rootValue) {
     var context = opts.context
     var rootValue = opts.rootValue
     // parse query
-    var documentAST = Executor.parseQuery(query)
+    var documentAST = _documentAST || Executor.parseQuery(query)
     // validate ast
     Executor._validateAST(documentAST, opts)
     // resolve options
-    context = Executor._resolveOpt(context, spark)
+    context = _context || Executor._resolveOpt(context, spark)
     rootValue = _rootValue || Executor._resolveOpt(rootValue, spark)
     // execute
     debug('GraphQL.execute:')
@@ -156,7 +156,7 @@ Executor.prototype.observe = function (payload) {
       var rootValue = {}
       rootValue[subscriptionFieldName] = next
       debug('graphqlObserve: execute next', rootValue, next)
-      var promise = self.execute(payload, rootValue).then(pluck('data'))
+      var promise = self.execute(payload, documentAST, rootValue, context).then(pluck('data'))
       return Observable.fromPromise(promise)
     })
   } catch (err) {

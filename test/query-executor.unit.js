@@ -168,10 +168,8 @@ describe('query-executor', function () {
 
           it('should catch errors and promise.reject them', function (done) {
             var self = this
-            var spark = {}
             var payload = {}
-            var opts = {}
-            this.executor.execute(spark, payload, opts).then(function () {
+            this.executor.execute(payload).then(function () {
               done(new Error('should have errored...'))
             }).catch(function (err) {
               expect(err).to.equal(self.parseErr)
