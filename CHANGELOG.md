@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.6.5
+* Fix: subscription `resolve`s should share execution variables w/ root `observe`
+
 ## v1.6.4
 * Fix: remove subscription from active-subscriptions onCompleted/onError
 
