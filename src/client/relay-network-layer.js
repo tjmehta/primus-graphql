@@ -178,7 +178,7 @@ PrimusRelayNetworkLayer.prototype._sendQueryWithRetries = function (queryRequest
   }
   return retry(function (retryCb, count) {
     return Promise.race([
-      timeout(opts.timeout).then(throwRetryErr.bind(null, { errors: new Error('Request timed out') }, count)),
+      timeout(opts.timeout).then(throwRetryErr.bind(null, { errors: [new Error('Request timed out')] }, count)),
       primus.graphql(
         queryRequest.getQueryString(),
         queryRequest.getVariables()
