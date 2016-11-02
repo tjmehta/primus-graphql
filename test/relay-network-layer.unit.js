@@ -187,32 +187,49 @@ describe('relay-network-layer', function () {
       })
 
       describe('errors', function () {
-        beforeEach(function () {
-          this.err = new Error('boom')
-          this.observable.error(this.err)
+        describe('error w/ stack', function () {
+          beforeEach(function () {
+            this.err = new Error('boom')
+            this.observable.error(this.err)
+          })
+
+          it('should call onError (no retries)', function () {
+            this.opts.retry.retries = 0
+            this.primus.graphql.returns(this.observable)
+            var rxSubscription = this.networkLayer.sendSubscription(this.subscriptionRequest)
+            expect(rxSubscription).to.exist()
+            expect(rxSubscription.unsubscribe).to.be.a.function()
+            sinon.assert.calledOnce(this.subscriptionRequest.onError)
+            sinon.assert.calledWith(this.subscriptionRequest.onError, sinon.match(function (err) {
+              expect(err.message).to.equal([
+                'sendSubscription(): Failed to maintain subscription to server,',
+                'tried 1 times.'
+              ].join(' '))
+              return true
+            }))
+          })
+
+          it('should call onError (retries)', function () {
+            this.primus.graphql.returns(this.observable)
+            var rxSubscription = this.networkLayer.sendSubscription(this.subscriptionRequest)
+            expect(rxSubscription).to.exist()
+            expect(rxSubscription.unsubscribe).to.be.a.function()
+          })
         })
 
-        it('should call onError (no retries)', function () {
-          this.opts.retry.retries = 0
-          this.primus.graphql.returns(this.observable)
-          var rxSubscription = this.networkLayer.sendSubscription(this.subscriptionRequest)
-          expect(rxSubscription).to.exist()
-          expect(rxSubscription.unsubscribe).to.be.a.function()
-          sinon.assert.calledOnce(this.subscriptionRequest.onError)
-          sinon.assert.calledWith(this.subscriptionRequest.onError, sinon.match(function (err) {
-            expect(err.message).to.equal([
-              'sendSubscription(): Failed to maintain subscription to server,',
-              'tried 1 times.'
-            ].join(' '))
-            return true
-          }))
-        })
+        describe('err no stack', function () {
+          beforeEach(function () {
+            this.err = new Error('')
+            delete this.err.stack
+            this.observable.error(this.err)
+          })
 
-        it('should call onError (retries)', function () {
-          this.primus.graphql.returns(this.observable)
-          var rxSubscription = this.networkLayer.sendSubscription(this.subscriptionRequest)
-          expect(rxSubscription).to.exist()
-          expect(rxSubscription.unsubscribe).to.be.a.function()
+          it('should call onError (retries)', function () {
+            this.primus.graphql.returns(this.observable)
+            var rxSubscription = this.networkLayer.sendSubscription(this.subscriptionRequest)
+            expect(rxSubscription).to.exist()
+            expect(rxSubscription.unsubscribe).to.be.a.function()
+          })
         })
       })
     })
@@ -326,7 +343,7 @@ describe('relay-network-layer', function () {
           })
       })
 
-      it('should retry 4xx payload', function (done) {
+      it('should retry 4xx payload (no errors)', function (done) {
         // opts
         var primus = this.primus
         var opts = this.networkLayer.opts
@@ -337,6 +354,62 @@ describe('relay-network-layer', function () {
         req.getQueryString.returns('query')
         req.getVariables.returns({})
         var payload = { statusCode: 400, data: 1 }
+        this.primus.graphql.resolves(payload)
+        // send query
+        this.networkLayer._sendQueryWithRetries(this.queryRequest)
+          .then(function () {
+            done(new Error('should throw an error'))
+          })
+          .catch(function (err) {
+            sinon.assert.calledThrice(primus.graphql)
+            expect(err.message).to.equal([
+              'sendQueryWithRetries(): Failed to get response from server,',
+              'tried', opts.retry.retries + 1, 'times.'
+            ].join(' '))
+            done()
+          })
+          .catch(done)
+      })
+
+      it('should retry 4xx payload (errors)', function (done) {
+        // opts
+        var primus = this.primus
+        var opts = this.networkLayer.opts
+        opts.retry.minTimeout = 1 // ms
+        opts.retry.maxTimeout = 1
+        // stubs
+        var req = this.queryRequest
+        req.getQueryString.returns('query')
+        req.getVariables.returns({})
+        var payload = { statusCode: 400, errors: [new Error('foo')] }
+        this.primus.graphql.resolves(payload)
+        // send query
+        this.networkLayer._sendQueryWithRetries(this.queryRequest)
+          .then(function () {
+            done(new Error('should throw an error'))
+          })
+          .catch(function (err) {
+            sinon.assert.calledThrice(primus.graphql)
+            expect(err.message).to.equal([
+              'sendQueryWithRetries(): Failed to get response from server,',
+              'tried', opts.retry.retries + 1, 'times.'
+            ].join(' '))
+            done()
+          })
+          .catch(done)
+      })
+
+      it('should retry 4xx payload (errors no stack)', function (done) {
+        // opts
+        var primus = this.primus
+        var opts = this.networkLayer.opts
+        opts.retry.minTimeout = 1 // ms
+        opts.retry.maxTimeout = 1
+        // stubs
+        var req = this.queryRequest
+        req.getQueryString.returns('query')
+        req.getVariables.returns({})
+        var payload = { statusCode: 400, errors: [{message: 'Error: foo'}] }
         this.primus.graphql.resolves(payload)
         // send query
         this.networkLayer._sendQueryWithRetries(this.queryRequest)

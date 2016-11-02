@@ -5,6 +5,19 @@ var put = require('101/put')
 var retry = require('promise-retry')
 var warning = require('warning')
 
+var errWarnMessage = function (err) {
+  if (err.stack) {
+    return err.stack
+  }
+  var msg = err.message || ''
+  msg = 'Error: ' + msg
+  if (msg.length < 10) {
+    // note: warning needs an message gte 10
+    msg += '___' // 'Error: '.length == 3
+  }
+  return msg
+}
+
 var timeout = function (time) {
   return new Promise(function (resolve) {
     setTimeout(resolve, time)
@@ -119,7 +132,7 @@ PrimusRelayNetworkLayer.prototype.sendSubscription = function (subscriptionReque
   var onAllErrors = function (_err, isFinal, retryCount) {
     if (!isFinal) {
       warning(false, 'sendSubscription: Error, retrying.')
-      warning(false, _err.stack || _err.message)
+      warning(false, errWarnMessage(_err))
     }
   }
   var retryOpts = put(this.opts.retry, {
@@ -131,7 +144,7 @@ PrimusRelayNetworkLayer.prototype.sendSubscription = function (subscriptionReque
       'tried', retryOpts.retries + 1, 'times.'
     ].join(' ')
     warning(false, message)
-    warning(false, _err.stack || _err.message)
+    warning(false, errWarnMessage(_err))
     var err = new Error(message)
     // payload
     err.source = { errors: [_err] }
@@ -178,7 +191,7 @@ PrimusRelayNetworkLayer.prototype._sendQueryWithRetries = function (queryRequest
       warning(false, message)
       if (source.errors) {
         source.errors.forEach(function (err) {
-          warning(false, err.stack || err.message)
+          warning(false, errWarnMessage(err))
         })
       }
     }
@@ -203,6 +216,11 @@ PrimusRelayNetworkLayer.prototype._sendQueryWithRetries = function (queryRequest
           return payload
         } else {
           warning(false, 'sendQueryWithRetries: Error statusCode, retrying.')
+          if (payload.errors) {
+            payload.errors.forEach(function (err) {
+              warning(false, errWarnMessage(err))
+            })
+          }
           throwRetryErr(payload, count)
         }
       })
