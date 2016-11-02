@@ -119,6 +119,7 @@ PrimusRelayNetworkLayer.prototype.sendSubscription = function (subscriptionReque
   var onAllErrors = function (_err, isFinal, retryCount) {
     if (!isFinal) {
       warning(false, 'sendSubscription: Error, retrying.')
+      warning(false, _err.stack || _err.message)
     }
   }
   var retryOpts = put(this.opts.retry, {
@@ -130,8 +131,13 @@ PrimusRelayNetworkLayer.prototype.sendSubscription = function (subscriptionReque
       'tried', retryOpts.retries + 1, 'times.'
     ].join(' ')
     warning(false, message)
+    warning(false, _err.stack || _err.message)
     var err = new Error(message)
+    // payload
     err.source = { errors: [_err] }
+    // debug
+    err.count = retryOpts.retries + 1
+    err.request = subscriptionRequest
     onError(err)
   }
 
@@ -161,7 +167,6 @@ PrimusRelayNetworkLayer.prototype.supports = function () {
  * @return {Promise<,Error>}
  */
 PrimusRelayNetworkLayer.prototype._sendQueryWithRetries = function (queryRequest) {
-  var self = this
   var opts = this.opts
   var primus = this.primus
   function throwRetryErr (source, count) {
@@ -169,11 +174,20 @@ PrimusRelayNetworkLayer.prototype._sendQueryWithRetries = function (queryRequest
       'sendQueryWithRetries(): Failed to get response from server,',
       'tried', opts.retry.retries + 1, 'times.'
     ].join(' ')
-    if (count > self.opts.retry.retries) {
+    if (count > opts.retry.retries) {
       warning(false, message)
+      if (source.errors) {
+        source.errors.forEach(function (err) {
+          warning(false, err.stack || err.message)
+        })
+      }
     }
     var err = new Error(message)
-    err.source = source // payload
+    // payload
+    err.source = source
+    // debug
+    err.count = opts.retry.retries + 1
+    err.request = queryRequest
     throw err
   }
   return retry(function (retryCb, count) {

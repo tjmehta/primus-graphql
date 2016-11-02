@@ -127,5 +127,6 @@ DataHandler.prototype._parseQueryOperation = function (payload) {
     this._responder.sendErrs(payload.id, 400, [err])
   }
   var match = queryRE.exec(query)
-  return match[0]
+  // index 1 is group 1
+  return match[1]
 }
