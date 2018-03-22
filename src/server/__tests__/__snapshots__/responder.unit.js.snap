@@ -1,0 +1,169 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Responder methods send should write data to spark 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "primus-graphql": Object {
+          "data": Object {
+            "bar": "bar",
+            "foo": "foo",
+          },
+          "id": "id",
+          "statusCode": 200,
+        },
+      },
+    ],
+  ],
+}
+`;
+
+exports[`Responder methods sendErrs send error should catch send error and send as error 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "primus-graphql": Object {
+          "errors": Array [
+            [Error: boom],
+            [Error: send error],
+          ],
+          "id": "id",
+          "statusCode": 500,
+        },
+      },
+    ],
+  ],
+}
+`;
+
+exports[`Responder methods sendErrs should write error to spark 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "primus-graphql": Object {
+          "errors": Array [
+            [Error: boom],
+          ],
+          "id": "id",
+          "statusCode": 400,
+        },
+      },
+    ],
+  ],
+}
+`;
+
+exports[`Responder methods sendEvent should write "completed" event to spark 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "primus-graphql": Object {
+          "data": Object {
+            "foo": "foo",
+          },
+          "event": "completed",
+          "id": "id",
+          "statusCode": 200,
+        },
+      },
+    ],
+  ],
+}
+`;
+
+exports[`Responder methods sendEvent should write "error" event to spark 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "primus-graphql": Object {
+          "errors": Array [
+            [Error: boom],
+          ],
+          "event": "error",
+          "id": "id",
+          "statusCode": 500,
+        },
+      },
+    ],
+  ],
+}
+`;
+
+exports[`Responder methods sendEvent should write "error" event with multiple errors to spark 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "primus-graphql": Object {
+          "errors": Array [
+            [Error: boom],
+            [Error: boom2],
+          ],
+          "event": "error",
+          "id": "id",
+          "statusCode": 500,
+        },
+      },
+    ],
+  ],
+}
+`;
+
+exports[`Responder methods sendEvent should write "error" event with statusCode to spark 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "primus-graphql": Object {
+          "errors": Array [
+            [Error: boom],
+          ],
+          "event": "error",
+          "id": "id",
+          "statusCode": 400,
+        },
+      },
+    ],
+  ],
+}
+`;
+
+exports[`Responder methods sendEvent should write "next" event to spark 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "primus-graphql": Object {
+          "data": Object {
+            "foo": "foo",
+          },
+          "event": "next",
+          "id": "id",
+          "statusCode": 200,
+        },
+      },
+    ],
+  ],
+}
+`;
+
+exports[`Responder methods sendEvent should write "next" event w/ no data to spark 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "primus-graphql": Object {
+          "event": "next",
+          "id": "id",
+          "statusCode": 200,
+        },
+      },
+    ],
+  ],
+}
+`;

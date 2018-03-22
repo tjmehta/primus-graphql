@@ -94,7 +94,7 @@ SubscriptionObservable.prototype._onData = function (payload) {
   debug('_onData', payload)
   if (payload.event === 'next') {
     // next
-    this._observer.next(payload.data)
+    this._observer.next({ data: payload.data })
   } else if (payload.event === 'error') {
     // error
     var errors = payload.errors.map(parseErr)

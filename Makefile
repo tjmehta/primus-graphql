@@ -10,4 +10,5 @@ build:
 build-browser:
 	make build && \
 	node ./scripts/build-graphql-schema.js && \
+	relay-compiler --src ./test-browser/fixtures/relay-app --schema ./test-browser/fixtures/graphql-schema.graphql && \
 	node ./scripts/build-primus-client.js

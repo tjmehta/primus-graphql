@@ -1,6 +1,5 @@
 // Karma configuration
 require('./fixtures/karma-primus.js')
-var path = require('path')
 
 var json = {
   // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -17,14 +16,14 @@ var json = {
   client: {
     captureConsole: true,
     mocha: {
-      timeout: 20000
+      timeout: 2000
     }
   },
 
   // list of files / patterns to load in the browser
   files: [
     'fixtures/primus-client.js',
-    '*.js'
+    'primus-graphql.e2e.js'
   ],
 
   // list of files to exclude
@@ -34,7 +33,7 @@ var json = {
   // preprocess matching files before serving them to the browser
   // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
   preprocessors: {
-    '*.js': [ 'browserify' ]
+    'primus-graphql.e2e.js': [ 'browserify' ]
   },
 
   // browserify options
@@ -42,8 +41,8 @@ var json = {
     debug: true,
     transform: [
       ['babelify', {
-        plugins: [path.join(__dirname, '/fixtures/babel-relay-plugin.js')],
-        presets: ['es2015', 'react']
+        plugins: ['relay'],
+        presets: ['react']
       }]
     ]
   },
@@ -93,4 +92,3 @@ module.exports = function (config) {
   json.logLevel = config.LOG_INFO
   config.set(json)
 }
-

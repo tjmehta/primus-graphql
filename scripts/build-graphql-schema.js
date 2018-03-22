@@ -6,7 +6,7 @@ var introspectionQuery = require('graphql/utilities').introspectionQuery
 var printSchema = require('graphql/utilities').printSchema
 var throwNextTick = require('throw-next-tick')
 
-var querySchemaRelPath = '../test/fixtures/graphql-schema.js'
+var querySchemaRelPath = '../test-browser/fixtures/graphql-schema.js'
 var schema = require(querySchemaRelPath)
 
 var filePath = path.join(__dirname, querySchemaRelPath.replace('.js', ''))
@@ -25,9 +25,8 @@ function getErr (result) {
 function writeFile (file, data) {
   return new Promise(function (resolve, reject) {
     fs.writeFile(file, data, function (err) {
-      err
-        ? reject(err)
-        : resolve
+      if (err) return reject(err)
+      resolve()
     })
   })
 }
@@ -43,8 +42,7 @@ Promise.all([
   })
 ])
   .then(function () {
-    console.log('Created ' + graphqlFile)
-    console.log('Created ' + jsonFile)
-    console.log('SUCCESS')
+    console.log('Created ' + path.relative(process.cwd(), graphqlFile))
+    console.log('Created ' + path.relative(process.cwd(), jsonFile))
   })
   .catch(throwNextTick)

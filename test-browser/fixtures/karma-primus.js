@@ -1,6 +1,6 @@
 var http = require('http')
 
-var createPrimus = require('../../test/fixtures/create-primus.js')
+var createPrimus = require('./create-primus.js')
 var shimmer = require('shimmer')
 
 shimmer.wrap(http, 'createServer', function (orig) {

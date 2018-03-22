@@ -1,0 +1,3 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`primus-graphql client graphql write success graphql subscription should make a graphql subscription 1`] = `[MockFunction]`;

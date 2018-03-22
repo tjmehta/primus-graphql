@@ -1,0 +1,157 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SubscriptionObservable methods subscribe primus.write fail should not subscribe and error 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "primus-graphql": Object {
+          "id": "payloadId",
+          "operationName": "operationName",
+          "query": "query",
+          "variables": Object {
+            "input_0": Object {
+              "var1": "foo",
+            },
+          },
+        },
+      },
+    ],
+    Array [
+      Object {
+        "primus-graphql": Object {
+          "event": "unsubscribe",
+          "id": "payloadId",
+        },
+      },
+    ],
+  ],
+}
+`;
+
+exports[`SubscriptionObservable methods subscribe primus.write fail should not subscribe and error 2`] = `
+Object {
+  "onComplete": [MockFunction],
+  "onError": [MockFunction] {
+    "calls": Array [
+      Array [
+        [Error: primus-graphql: write failed],
+      ],
+    ],
+  },
+  "onNext": [MockFunction],
+}
+`;
+
+exports[`SubscriptionObservable methods subscribe primus.write success should subscribe 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "primus-graphql": Object {
+          "id": "payloadId",
+          "operationName": "operationName",
+          "query": "query",
+          "variables": Object {
+            "input_0": Object {
+              "var1": "foo",
+            },
+          },
+        },
+      },
+    ],
+  ],
+}
+`;
+
+exports[`SubscriptionObservable methods subscribe primus.write success subscribed reconnect should resend subscription with reconnect var 1`] = `
+[MockFunction] {
+  "calls": Array [
+    Array [
+      Object {
+        "primus-graphql": Object {
+          "id": "payloadId",
+          "operationName": "operationName",
+          "query": "query",
+          "variables": Object {
+            "input_0": Object {
+              "var1": "foo",
+            },
+          },
+        },
+      },
+    ],
+    Array [
+      Object {
+        "primus-graphql": Object {
+          "id": "payloadId",
+          "operationName": "operationName",
+          "query": "query",
+          "variables": Object {
+            "input_0": Object {
+              "reconnect": true,
+              "var1": "foo",
+            },
+          },
+        },
+      },
+    ],
+  ],
+}
+`;
+
+exports[`SubscriptionObservable methods subscribe primus.write success subscribed should receive complete 1`] = `
+Object {
+  "onComplete": [MockFunction] {
+    "calls": Array [
+      Array [],
+    ],
+  },
+  "onError": [MockFunction],
+  "onNext": [MockFunction],
+}
+`;
+
+exports[`SubscriptionObservable methods subscribe primus.write success subscribed should receive error 1`] = `
+Object {
+  "onComplete": [MockFunction],
+  "onError": [MockFunction] {
+    "calls": Array [
+      Array [
+        [Error: boom],
+      ],
+    ],
+  },
+  "onNext": [MockFunction],
+}
+`;
+
+exports[`SubscriptionObservable methods subscribe primus.write success subscribed should receive nested multiple errors 1`] = `
+Object {
+  "onComplete": [MockFunction],
+  "onError": [MockFunction] {
+    "calls": Array [
+      Array [
+        [Error: multiple errors],
+      ],
+    ],
+  },
+  "onNext": [MockFunction],
+}
+`;
+
+exports[`SubscriptionObservable methods subscribe primus.write success subscribed should receive next 1`] = `
+Object {
+  "onComplete": [MockFunction],
+  "onError": [MockFunction],
+  "onNext": [MockFunction] {
+    "calls": Array [
+      Array [
+        Object {
+          "data": "nextData",
+        },
+      ],
+    ],
+  },
+}
+`;
