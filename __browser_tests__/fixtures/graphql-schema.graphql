@@ -1,0 +1,85 @@
+input CreateUserInput {
+  name: String!
+  clientMutationId: String
+}
+
+type CreateUserPayload {
+  user: User
+  clientMutationId: String
+}
+
+input InvalidSubscriptionInput {
+  id: String!
+}
+
+type InvalidSubscriptionOutput {
+  user: User
+}
+
+"""Root query"""
+type Mutation {
+  createUser(input: CreateUserInput!): CreateUserPayload
+  updateUser(input: UpdateUserInput!): UpdateUserPayload
+}
+
+"""Root query"""
+type Query {
+  user(id: String): User
+}
+
+input subscribeThrowsInput {
+  id: String!
+  clientSubscriptionId: String
+}
+
+type subscribeThrowsPayload {
+  user: User
+  clientSubscriptionId: String
+}
+
+"""Root subscription"""
+type Subscription {
+  userChanges(input: UserChangesInput!): UserChangesPayload
+  userChangesPromise(input: UserChangesPromiseInput!): UserChangesPromisePayload
+  invalidSubscription(input: InvalidSubscriptionInput): InvalidSubscriptionOutput
+  subscribeThrows(input: subscribeThrowsInput!): subscribeThrowsPayload
+}
+
+input UpdateUserInput {
+  id: String!
+  name: String
+  clientMutationId: String
+}
+
+type UpdateUserPayload {
+  user: User
+  clientMutationId: String
+}
+
+"""user"""
+type User {
+  """The ID of an object"""
+  id: ID!
+  name: String
+  idAndName: String
+}
+
+input UserChangesInput {
+  id: String!
+  clientSubscriptionId: String
+}
+
+type UserChangesPayload {
+  user: User
+  clientSubscriptionId: String
+}
+
+input UserChangesPromiseInput {
+  id: String!
+  clientSubscriptionId: String
+}
+
+type UserChangesPromisePayload {
+  user: User
+  clientSubscriptionId: String
+}

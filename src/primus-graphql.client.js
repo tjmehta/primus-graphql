@@ -24,6 +24,7 @@ require('observable-backoff')
 var notEquals = not(equals)
 var resEE = new EventEmitter()
 
+/* istanbul ignore next */
 primusOpts = primusOpts || {}
 defaults(primusOpts, defaultPrimusOpts)
 var key = primusOpts.key
@@ -40,23 +41,23 @@ primus.graphql = function (query, vars, files, operationName, cb) {
   debug('graphql', query, vars)
   if (isFunction(vars)) {
     cb = vars
-    vars = null
-    files = null
+    vars = undefined
+    files = undefined
   }
   if (isFunction(files)) {
     cb = files
-    files = null
+    files = undefined
   }
   if (isFunction(operationName)) {
     cb = operationName
-    operationName = null
+    operationName = undefined
   }
   // parse query operation
   var end = Math.min.apply(Math, [query.indexOf(' '), query.indexOf('{')].filter(notEquals(-1)))
   var queryOperation = query.slice(0, end)
   // create payload
   var payload = {}
-  payload.id = uuid()
+  payload.id = uuid.v4()
   payload.query = query
   payload.variables = vars
   payload.operationName = operationName
