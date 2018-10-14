@@ -1,6 +1,6 @@
 {
   "name": "primus-graphql",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Primus server and client plugins for GraphQL and Relay",
   "main": "index.js",
   "browser": {
