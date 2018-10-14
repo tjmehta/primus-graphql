@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.1
+* Fix: update package-lock.json
+
 ## 2.0.0
 * Breaking: client was rewritten to work with relay-modern
 * Breaking: remove reconnect input field on subscriptions
