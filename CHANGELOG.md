@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.0.2
+* Fix: travis tests
+
+## 2.0.1
+* Fix: update package-lock.json
+
+## 2.0.0
+* Breaking: client was rewritten to work with relay-modern
+* Breaking: remove reconnect input field on subscriptions
+* Feature: server now uses official graphql subscriptions
+
+## v1.6.6
+* Fix: travis-ci tests...
+
 ## v1.6.5
 * Fix: subscription `resolve`s should share execution variables w/ root `observe`
 * Fix: client timeout errors resulted in non-array `err.errors`

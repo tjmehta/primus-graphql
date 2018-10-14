@@ -6,3 +6,4 @@ before_script:
   - sh -e /etc/init.d/xvfb start
 node_js:
   - "6"
+  - "8"

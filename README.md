@@ -1,70 +1,31 @@
-# primus-graphql [![Build Status](https://travis-ci.org/tjmehta/primus-graphql.svg?branch=master)](https://travis-ci.org/tjmehta/primus-graphql) [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)
-Primus server/client plugin for GraphQL and Relay
+# primus-graphql [![Build Status](https://travis-ci.org/tjmehta/primus-graphql.svg?branch=master)](https://travis-ci.org/tjmehta/primus-graphql) [![Coverage Status](https://coveralls.io/repos/github/tjmehta/primus-graphql/badge.svg?branch=master)](https://coveralls.io/github/tjmehta/primus-graphql?branch=master) [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)
+
+![primus-graphql-logo](https://i.imgur.com/RDn6XT9.png)
+
+Primus-GraphQL is a flexible client and server library that can be used to power realtime [GraphQL](https://github.com/graphql/graphql-js). It is similar to [Express-GraphQL](https://github.com/graphql/express-graphql) but with support for [Relay](https://github.com/facebook/relay) and Subscriptions!
+
+This module is a Primus plugin. [Primus](https://github.com/primus/primus) is a robust realtime abstraction layer that allows you to use WebSockets, Socket.io, Engine.io, SockJS, or any transport-layer. Primus powers sending and receiving data on both the client and the server. Primus-GraphQL makes it easy to send and handle GraphQL queries, mutations, and subscriptions.
+
 
 # Installation
 ```bash
 npm i --save primus-graphql
 npm i --save rxjs # peer dependency (server/client)
 npm i --save graphql # peer dependency (server)
-npm i --save react-relay # optional peer dependency (if using relay in client)
+npm i --save relay-runtime # optional peer dependency (if using relay in client)
 ```
 
 # Usage
 ### GraphQL Example
-Client Example:
-```js
-var client = new Primus()
-var query = 'query { user { id, name } }'
-// promise api
-client.graphql(query).then(function (data) {
-  if (data.errors) {
-    console.error(data.errors)
-    return
-  }
-  console.log(data)
-  /* see hardcoded server example below
-    {
-      data: {
-        user: {
-          id: 1,
-          name: 'name'
-        }
-      }
-    }
-   */
-})
-// callback api
-client.graphql(query, function (err, data) {
-  if (err) {
-    console.error(err)
-    return
-  }
-  if (data.errors) {
-    console.error(data.errors)
-    return
-  }
-  console.log(data)
-  /* see hardcoded server example below
-    {
-      data: {
-        user: {
-          id: 1,
-          name: 'name'
-        }
-      }
-    }
-   */
-})
-```
 Server Example:
 ```js
-var GraphQL = require('graphql')
-var primus = require('primus')
-var primusGraphQL = require('primus-graphql')
-
-var GraphQLSchema = GraphQL.GraphQLSchema
-var GraphQLString = GraphQL.GraphQLString
-var GraphQLObjectType = GraphQL.GraphQLObjectType
+import {
+  GraphQLSchema,
+  GraphQLString,
+  GraphQLObjectType,
+} from 'graphql'
+import primus from 'primus'
+import primusGraphQL from 'primus-graphql'
 
 var UserType = new GraphQLObjectType({
   name: 'User',
@@ -118,8 +79,54 @@ primus.use('graphql', primusGraphQL({
   validationRules: [/* additional validation rules */]
 }))
 ```
+Client Example:
+```js
+const client = new Primus()
+const query = 'query { user { id, name } }'
+// promise api
+client.graphql(query).then(function (data) {
+  if (data.errors) {
+    console.error(data.errors)
+    return
+  }
+  console.log(data)
+  /* see hardcoded server example below
+    {
+      data: {
+        user: {
+          id: 1,
+          name: 'name'
+        }
+      }
+    }
+   */
+})
+// callback api
+client.graphql(query, function (err, data) {
+  if (err) {
+    console.error(err)
+    return
+  }
+  if (data.errors) {
+    console.error(data.errors)
+    return
+  }
+  console.log(data)
+  /* see hardcoded server example below
+    {
+      data: {
+        user: {
+          id: 1,
+          name: 'name'
+        }
+      }
+    }
+   */
+})
+```
 
-##### Options
+
+##### Server Options
 
 The `primusGraphQL` plugin function accepts the following options:
 
@@ -142,206 +149,82 @@ The `primusGraphQL` plugin function accepts the following options:
   * **`validationRules`**: Optional. Additional validation rules queries must
     satisfy in addition to those defined by the GraphQL spec.
 
-### Relay Example
+### Relay
+
+##### Relay Network Options
+
+The `PrimusRelayNetwork` class accepts the following options:
+
+* **`timeout`**: The max timeout for any graphql query or mutation.
+* **`retry`**: Exponential backoff settings for retryable query, mutation, or subscription errors.
+* **`retry.maxTimeout`**: The max timeout to wait before retrying.
+* **`retry.minTimeout`**: The min timeout to wait before retrying.
+* **`retry.factor`**: The factor in which to increase the retry timeout.
+* **`retry.retries`**: The max number of retries to attempt.
+
+##### Subscriptions
+If primus disconnects and reconnects, any graphql subscriptions that were not disposed will resend the same query and resume. If this behavior is undesired dispose the subscription on primus 'disconnect'.
+
+##### Relay Example
 ```js
-var Relay = require('react-relay')
-var PrimusRelayNetworkAdapter = require('primus-graphql/relay-network-layer')
-var primus = new Primus()
+import React from 'react'
+import ReactDom from 'react-dom'
+
+import PrimusRelayNetwork from 'primus-graphql/relay-network'
+import { QueryRenderer, graphql } from 'react-relay';
+import { Environment, RecordSource, Store } from 'relay-runtime';
+
+const primus = new Primus()
+
+const network = new PrimusRelayNetwork(primus, {
+  // default options:
+  timeout: 15000,
+  retry: {
+    minTimeout: 1000,
+    maxTimeout: 3000,
+    factor: 3,
+    retries: 2
+  }
+})
+
+const environment = new Environment({
+  network: network,
+  store: new Store(new RecordSource()),
+});
 
 
-Relay.injectNetworkLayer(
-  new PrimusRelayNetworkAdapter(primus, {
-    // default options:
-    timeout: 15000,
-    retry: {
-      minTimeout: 1000,
-      maxTimeout: 3000,
-      factor: 3,
-      retries: 2
-    }
-  })
+ReactDOM.render(
+  <QueryRenderer
+    environment={environment}
+    query={graphql`
+      query appQuery {
+        viewer {
+          ...App_viewer
+        }
+      }
+    `}
+    render={({error, props}) => {
+      if (error) {
+        return <div>{error.message}</div>
+      }
+      if (!props) {
+        return <div>Loading</div>
+      }
+      return <div>{`viewer: ${JSON.stringify(props.viewer)}`}</div>
+    }}
+  />,
+  document.getElementById('root'),
 )
 ```
 
-### Subscriptions example (alpha support)
-Subscriptions currently requires my fork of react-relay. Don't worry, it won't be a fork forever the [PR](https://github.com/facebook/relay/pull/1298) is pending.
-To use my fork use this in your package.json `"react-relay": "github:tjmehta/relay#subscriptions-build"`
-
-##### Graphql subscription schema example
-* `primus-graphql` exports a graphql subscription factory method via `require('primus-graphql/graphql-relay-subscription')`
-* graphql subscription's config requires:
-    - `name`, name of the subscription
-    - `inputFields`, `input` argument schema, similar to mutations
-    - `outputFields`, `output` schema, similar to mutations
-    - `observe`, should return an observable which triggers a `onNext` callback upon recieving an update. The `next` value will be used as the `rootValue` to `resolve`. For more info on observables checkout [rxjs](https://github.com/ReactiveX/RxJS).
-    - `[resolve]`, the same as other schemas with one difference. `resolve` is called when recieving every `next` value. `resolve` is not required if the `next` value is the output exactly. In the case that `next` data is only a partial-output or `null`, you can use resolve to fetch missing output-data.
-* special note about `inputFields`: if the client disconnects and reconnects the client will automatically add a `reconnect` input field w/ a value of `true`. In this case, you can send the fresh data, because it could be out of date.
-```js
-var relaySubscription = require('primus-graphql/graphql-relay-subscription')
-
-var UserType = new GraphQLObjectType({
-  name: 'User',
-  description: 'user',
-  fields: {
-    id: { type: GraphQLString },
-    name: { type: GraphQLString }
-  }
-})
-
-var UserChangesSubscription = relaySubscription({
-  name: 'UserChanges',
-  inputFields: {
-    id: {
-      type: new GraphQLNonNull(GraphQLString)
-    }
-  },
-  outputFields: {
-    me: {
-      type: UserType
-    }
-  },
-  observe: (input, context, info) => {
-    var event = 'users:' + input.id
-    debug('observe', event, input, input.id)
-    return new Observable(function (subscriber) {
-      debug('subscribe', event)
-      db.ee.on(event, onNext)
-      db.ee.on(event + ':error', subscriber.error)
-      db.ee.on(event + ':completed', subscriber.complete)
-      function onNext (user) {
-        subscriber.next({
-          me: user
-        })
-      }
-      if (input.reconnect) {
-        debug('reconnect', event, input, input.id)
-        // re-subscribed due to reconnect
-        // emit user immediately, so the frontend has latest data
-        db.ee.emit(event, db.users[input.id])
-      }
-      return new RxSubscription(function () {
-        debug('dispose', event, input.id)
-        db.ee.removeListener(event, onNext)
-        db.ee.removeListener(event + ':error', subscriber.error)
-        db.ee.removeListener(event + ':completed', subscriber.complete)
-      })
-    })
-  }
-})
-```
-
-##### Relay subscription example
-* currently requires my fork of relay: `"github:tjmehta/relay#subscriptions-build"`
-* The `Relay.Subscription` class is very similar to `Relay.Mutation`, except does not have a "fat query". The query is fully define by subscription query (`getSubscription`).
-```js
-var Relay = require('react-relay')
-
-class UserSubscription extends Relay.Subscription {
-  getCollisionKey () {
-    return 'subscribe_' + this.props.me.id
-  }
-  getConfigs () {
-    return [{
-      type: 'FIELDS_CHANGE',
-      fieldIDs: { user: this.props.me.id }
-    }]
-  }
-  getSubscription () {
-    return Relay.QL`
-      subscription userSubscription ($input: UserChangesInput!) {
-        userChanges (input: $input) {
-          user {
-            name
-          }
-        }
-      }
-    `
-  }
-  getVariables () {
-    return {
-      id: this.props.me.id
-    }
-  }
-}
-UserSubscription.fragments = {
-  me: () => Relay.QL`
-    fragment on User {
-      id
-    }
-  `
-}
-```
-
-##### Using relay subscriptions in a view example
-* relay environment has a new method `subscribe` which accepts a relay subscription
-    - subscribe takes a subscription, and, optionally, subscription callbacks `{ onNext:..., onError:..., onCompleted, ...}` (second arg, not used in example below).
-```js
-var React = require('react')
-var Relay = require('react-relay')
-
-var UserSubscription = require('./queries/user-subscription.js')
-
-class UserComponent extends React.Component {
-  constructor (props) {
-    super(props)
-    // in this example, we subscribe immediately to an user changes
-    var subscription = new Subscription({ me: props.me })
-    this.disposable = this.props.relay.subscribe(subscription)
-    // disposable allows you to "stop listening" to this subscription
-    // by calling `disposable.dispose()`
-  }
-  render () {
-    return <div>
-      <div>
-        <span>ID:</span>
-        {this.props.me.id}
-      </div>
-      <div>
-        <span>NAME:</span>
-        {this.props.me.name}
-      </div>
-    </div>
-  }
-}
-
-var UserContainer = Relay.createContainer(UserComponent, {
-  fragments: {
-    me: () => Relay.QL`
-      fragment on User {
-        id,
-        name,
-        ${UserSubscription.getFragment('me')}
-      }
-    `
-  }
-})
-
-class UserRoute extends Relay.Route {}
-
-UserRoute.queries = {
-  me: (Component) => Relay.QL`
-    query UserQuery {
-      me {
-        ${Component.getFragment('me')}
-      }
-    }
-  `
-}
-UserRoute.routeName = 'User'
-
-var RootContainer = <Relay.RootContainer
-  Component={UserContainer}
-  route={new UserRoute()}
-/>
-
-// render..
-```
-
-##### Full subscriptions example
-Check out the end-to-end tests here: test-browser/primus-graphql.e2e.js
+##### Full query, mutation, and subscriptions examples
+Check out the end-to-end tests here: __browser_tests__/primus-graphql.e2e.js
 
 # Changelog
 [CHANGELOG.md](https://github.com/tjmehta/primus-graphql/blob/master/CHANGELOG.md)
+
+# Thank you
+Thank you to the contributors of Primus, GraphQL, and Relay!
 
 # License
 MIT
