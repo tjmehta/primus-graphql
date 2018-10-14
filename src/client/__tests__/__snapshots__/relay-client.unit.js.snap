@@ -15,6 +15,12 @@ exports[`PrimusRelayClient methods fetch graphql success (200) should send graph
       },
     ],
   ],
+  "results": Array [
+    Object {
+      "isThrow": false,
+      "value": Promise {},
+    },
+  ],
 }
 `;
 
@@ -31,6 +37,12 @@ Object {
         [Error: long message],
       ],
     ],
+    "results": Array [
+      Object {
+        "isThrow": false,
+        "value": undefined,
+      },
+    ],
   },
   "onNext": [MockFunction],
 }
@@ -45,6 +57,12 @@ Object {
         [Error],
       ],
     ],
+    "results": Array [
+      Object {
+        "isThrow": false,
+        "value": undefined,
+      },
+    ],
   },
   "onNext": [MockFunction],
 }
@@ -57,10 +75,14 @@ Object {
   "onNext": [MockFunction] {
     "calls": Array [
       Array [
-        Object {
-          "data": "nextData",
-        },
+        "nextData",
       ],
+    ],
+    "results": Array [
+      Object {
+        "isThrow": false,
+        "value": undefined,
+      },
     ],
   },
 }

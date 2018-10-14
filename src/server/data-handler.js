@@ -113,7 +113,7 @@ DataHandler.prototype._handleQueryOrMutation = function (payload) {
   return this._queryExecutor.execute(payload).then(function (resPayload) {
     self._responder.send(id, 200, resPayload)
   }).catch(function (err) {
-    self._responder.sendErrs(id, err.statusCode, [err])
+    self._responder.sendErrs(id, err.status, [err])
   })
 }
 

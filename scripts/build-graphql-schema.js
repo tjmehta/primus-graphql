@@ -6,7 +6,7 @@ var introspectionQuery = require('graphql/utilities').introspectionQuery
 var printSchema = require('graphql/utilities').printSchema
 var throwNextTick = require('throw-next-tick')
 
-var querySchemaRelPath = '../test-browser/fixtures/graphql-schema.js'
+var querySchemaRelPath = '../__browser_tests__/fixtures/graphql-schema.js'
 var schema = require(querySchemaRelPath)
 
 var filePath = path.join(__dirname, querySchemaRelPath.replace('.js', ''))

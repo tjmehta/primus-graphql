@@ -58,7 +58,7 @@ Object {
         },
         "selections": Array [
           Object {
-            "alias": null,
+            "alias": undefined,
             "arguments": Array [],
             "directives": Array [],
             "kind": "Field",
@@ -82,7 +82,7 @@ Object {
               },
               "selections": Array [
                 Object {
-                  "alias": null,
+                  "alias": undefined,
                   "arguments": Array [],
                   "directives": Array [],
                   "kind": "Field",
@@ -98,7 +98,7 @@ Object {
                     },
                     "value": "id",
                   },
-                  "selectionSet": null,
+                  "selectionSet": undefined,
                 },
               ],
             },
@@ -116,10 +116,4 @@ Object {
 }
 `;
 
-exports[`QueryExecutor statics parseQuery should throw an error for an invalid query 1`] = `
-[GraphQLError: Syntax Error GraphQL request (1:14) Expected {, found <EOF>
-
-1: query invalid
-                ^
-]
-`;
+exports[`QueryExecutor statics parseQuery should throw an error for an invalid query 1`] = `[GraphQLError: Syntax Error: Expected {, found <EOF>]`;

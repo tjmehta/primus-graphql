@@ -128,7 +128,7 @@ describe('Responder', () => {
         const args = {
           id: 'id',
           event: 'error',
-          data: defaults(new Error('boom'), { statusCode: 400 })
+          data: defaults(new Error('boom'), { status: 400 })
         }
         ctx.responder.sendEvent(args.id, args.event, args.data)
         expect(ctx.spark.write).toMatchSnapshot()

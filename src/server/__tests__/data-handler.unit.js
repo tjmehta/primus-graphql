@@ -70,7 +70,7 @@ describe('DataHandler', () => {
 
         describe('subscribe success', () => {
           beforeEach(() => {
-            ctx.iteratorVals = [{data:1}, {data:2}, {data:3}]
+            ctx.iteratorVals = [{data: 1}, {data: 2}, {data: 3}]
             ctx.iterator = createAsyncIterator(ctx.iteratorVals)
             ctx.subscribePromise.resolve(ctx.iterator)
           })
@@ -190,7 +190,7 @@ describe('DataHandler', () => {
         describe('query error', () => {
           beforeEach(() => {
             ctx.err = new Error('boom')
-            ctx.err.statusCode = 400
+            ctx.err.status = 400
             ctx.subscribePromise.reject(ctx.err)
           })
 
@@ -206,7 +206,7 @@ describe('DataHandler', () => {
               const responder = Responder.mock.instances[0]
               expect(responder.sendErrs).toHaveBeenCalledWith(
                 payload.id,
-                ctx.err.statusCode,
+                ctx.err.status,
                 [ctx.err]
               )
             })

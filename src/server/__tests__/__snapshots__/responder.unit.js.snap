@@ -16,6 +16,12 @@ exports[`Responder methods send should write data to spark 1`] = `
       },
     ],
   ],
+  "results": Array [
+    Object {
+      "isThrow": false,
+      "value": undefined,
+    },
+  ],
 }
 `;
 
@@ -35,6 +41,12 @@ exports[`Responder methods sendErrs send error should catch send error and send 
       },
     ],
   ],
+  "results": Array [
+    Object {
+      "isThrow": false,
+      "value": undefined,
+    },
+  ],
 }
 `;
 
@@ -52,6 +64,12 @@ exports[`Responder methods sendErrs should write error to spark 1`] = `
         },
       },
     ],
+  ],
+  "results": Array [
+    Object {
+      "isThrow": false,
+      "value": undefined,
+    },
   ],
 }
 `;
@@ -72,6 +90,12 @@ exports[`Responder methods sendEvent should write "completed" event to spark 1`]
       },
     ],
   ],
+  "results": Array [
+    Object {
+      "isThrow": false,
+      "value": undefined,
+    },
+  ],
 }
 `;
 
@@ -90,6 +114,12 @@ exports[`Responder methods sendEvent should write "error" event to spark 1`] = `
         },
       },
     ],
+  ],
+  "results": Array [
+    Object {
+      "isThrow": false,
+      "value": undefined,
+    },
   ],
 }
 `;
@@ -111,6 +141,12 @@ exports[`Responder methods sendEvent should write "error" event with multiple er
       },
     ],
   ],
+  "results": Array [
+    Object {
+      "isThrow": false,
+      "value": undefined,
+    },
+  ],
 }
 `;
 
@@ -129,6 +165,12 @@ exports[`Responder methods sendEvent should write "error" event with statusCode 
         },
       },
     ],
+  ],
+  "results": Array [
+    Object {
+      "isThrow": false,
+      "value": undefined,
+    },
   ],
 }
 `;
@@ -149,6 +191,12 @@ exports[`Responder methods sendEvent should write "next" event to spark 1`] = `
       },
     ],
   ],
+  "results": Array [
+    Object {
+      "isThrow": false,
+      "value": undefined,
+    },
+  ],
 }
 `;
 
@@ -164,6 +212,12 @@ exports[`Responder methods sendEvent should write "next" event w/ no data to spa
         },
       },
     ],
+  ],
+  "results": Array [
+    Object {
+      "isThrow": false,
+      "value": undefined,
+    },
   ],
 }
 `;

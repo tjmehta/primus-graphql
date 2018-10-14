@@ -3,10 +3,9 @@ var assert = require('assert')
 var util = require('util')
 
 var bindAll = require('101/bind-all')
-var debug = require('debug')('primus-graphql:substream-observable')
+var debug = require('debug')('primus-graphql:subscription-observable')
 var Observable = require('rxjs/Observable').Observable
 var parseErr = require('error-to-json').parse
-var put = require('101/put')
 var Subscription = require('rxjs/Subscription').Subscription
 // add subscription.dispose operator
 require('../shared/subscription-dispose.js')
@@ -59,9 +58,7 @@ SubscriptionObservable.prototype.__subscribe = function (observer) {
  * @param  {Boolean} reconnect  if subscription is being sent for a reconnect
  */
 SubscriptionObservable.prototype._sendSubscription = function (reconnect) {
-  var data = (reconnect)
-    ? put(this._data, ('["' + this._key + '"].variables.input_0.reconnect'), true)
-    : this._data
+  var data = this._data
   debug('write', data)
   var writeSuccess = this._primus.write(data)
   if (!writeSuccess) {

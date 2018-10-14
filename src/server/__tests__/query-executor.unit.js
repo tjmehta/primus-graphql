@@ -1,7 +1,6 @@
 /* eslint-env jest */
 const defaults = require('101/defaults')
 const EventEmitter = require('events').EventEmitter
-const GraphQL = require('graphql')
 const isAsyncIterable = require('iterall').isAsyncIterable
 const Spark = require('primus/spark')
 
@@ -120,15 +119,14 @@ describe('QueryExecutor', () => {
             console.log(data)
             throw new Error('this should not happen')
           }).catch((gqlErr) => {
-            expect(gqlErr.name).toEqual('GraphQLError')
             expect(gqlErr.message).toEqual(err.message)
+            expect(gqlErr.name).toEqual('GraphQLError')
           })
         })
       })
 
       describe('payload data is error', () => {
         const err = new Error('boom')
-        const execute = GraphQL.execute
         let queryExecutor2
 
         beforeEach(() => {
@@ -140,8 +138,32 @@ describe('QueryExecutor', () => {
           // some extra coverage here..
           queryExecutor2 = new QueryExecutor2(spark, {schema: opts.schema, context: () => 'ctx'}, primusOpts)
         })
-        afterEach(() => {
-          GraphQL.execute = execute
+
+        it('should yield error', () => {
+          const payload = {
+            query: 'query UserQuery { user { id } }',
+            variables: {}
+          }
+          return queryExecutor2.execute(payload).then(() => {
+            throw new Error('this should not happen')
+          }).catch((_err) => {
+            expect(_err).toBe(err)
+          })
+        })
+      })
+
+      describe('graphql.execute throws', () => {
+        const err = new Error('boom')
+        let queryExecutor2
+
+        beforeEach(() => {
+          jest.doMock('graphql')
+          const GraphQL = require('graphql')
+          GraphQL.execute.mockImplementation(() => { throw err })
+          GraphQL.validate.mockImplementation(() => [])
+          const QueryExecutor2 = require('../query-executor')
+          // some extra coverage here..
+          queryExecutor2 = new QueryExecutor2(spark, {schema: opts.schema, context: () => 'ctx'}, primusOpts)
         })
 
         it('should yield error', () => {
@@ -160,7 +182,6 @@ describe('QueryExecutor', () => {
       describe('multiple errors', () => {
         const err1 = new Error('boom1')
         const err2 = new Error('boom2')
-        const execute = GraphQL.execute
         let queryExecutor2
 
         beforeEach(() => {
@@ -170,9 +191,6 @@ describe('QueryExecutor', () => {
           GraphQL.validate.mockImplementation(() => [])
           const QueryExecutor2 = require('../query-executor')
           queryExecutor2 = new QueryExecutor2(spark, opts, primusOpts)
-        })
-        afterEach(() => {
-          GraphQL.execute = execute
         })
 
         it('should yield multiple validation errors', () => {

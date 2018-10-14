@@ -10,7 +10,7 @@ const SubscriptionObservable = require('../subscription-observable')
 jest.unmock('../subscription-observable')
 jest.mock('primus')
 
-function createStacklessErr(msg) {
+function createStacklessErr (msg) {
   const err = new Error(msg)
   delete err.stack // avoid stacks in snapshots..
   return err
