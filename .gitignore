@@ -35,8 +35,8 @@ node_modules
 
 # Build files
 # lib
-oldddd/fixtures/graphql-schema.json
-oldddd/fixtures/graphql-schema.schema
-test-browser/fixtures/primus-client.js
+__browser_tests__/fixtures/graphql-schema.json
+__browser_tests__/fixtures/graphql-schema.schema
+__browser_tests__/fixtures/primus-client.js
 node_modules.nosync
 .git.nosync

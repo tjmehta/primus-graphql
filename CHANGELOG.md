@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.2
+* Fix: travis tests
+
 ## 2.0.1
 * Fix: update package-lock.json
 

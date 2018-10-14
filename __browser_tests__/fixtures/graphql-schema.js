@@ -73,7 +73,8 @@ var UpdateUserMutation = Relay.mutationWithClientMutationId({
   mutateAndGetPayload (fields, ctx) {
     const userId = Relay.fromGlobalId(fields.id).id
     debug('updateUser', userId)
-    const { id, ...update } = fields
+    const update = Object.assign({}, fields)
+    delete update.id
     return {
       user: db.updateUser(userId, update)
     }
