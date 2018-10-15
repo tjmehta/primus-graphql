@@ -27,7 +27,7 @@ import {
 import primus from 'primus'
 import primusGraphQL from 'primus-graphql'
 
-var UserType = new GraphQLObjectType({
+const UserType = new GraphQLObjectType({
   name: 'User',
   description: 'user',
   fields: {
@@ -36,7 +36,7 @@ var UserType = new GraphQLObjectType({
   }
 })
 
-var Query = new GraphQLObjectType({
+const Query = new GraphQLObjectType({
   name: 'Query',
   description: 'Root query',
   fields: {
@@ -53,12 +53,12 @@ var Query = new GraphQLObjectType({
   }
 })
 
-var schema = new GraphQLSchema({
+const schema = new GraphQLSchema({
   query: Query
 })
 
-var server = /* your http server */
-var primus = new Primus(server, {
+const server = /* your http server */
+const primus = new Primus(server, {
   transport: /* transport */,
   parser: 'json'
 })
