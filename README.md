@@ -2,7 +2,7 @@
 
 ![primus-graphql-logo](https://i.imgur.com/RDn6XT9.png)
 
-Primus-GraphQL is a flexible client and server library that can be used to power realtime [GraphQL](https://github.com/graphql/graphql-js). It is similar to [Express-GraphQL](https://github.com/graphql/express-graphql) but with support for [Relay](https://github.com/facebook/relay) and Subscriptions!
+Primus-GraphQL is a flexible client and server library that can be used to power realtime [GraphQL](https://github.com/graphql/graphql-js) applications. It is similar to [Express-GraphQL](https://github.com/graphql/express-graphql) but with support for [Relay](https://github.com/facebook/relay) and Subscriptions!
 
 This module is a Primus plugin. [Primus](https://github.com/primus/primus) is a robust realtime abstraction layer that allows you to use WebSockets, Socket.io, Engine.io, SockJS, or any transport-layer. Primus powers sending and receiving data on both the client and the server. Primus-GraphQL makes it easy to send and handle GraphQL queries, mutations, and subscriptions.
 
