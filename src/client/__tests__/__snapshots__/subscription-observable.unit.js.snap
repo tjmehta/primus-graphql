@@ -196,9 +196,7 @@ Object {
   "onNext": [MockFunction] {
     "calls": Array [
       Array [
-        Object {
-          "data": "nextData",
-        },
+        "nextData",
       ],
     ],
     "results": Array [

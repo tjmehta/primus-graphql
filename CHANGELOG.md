@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.3
+* Fix: backwards compatibility with primus-graphql relay-classic network-layer
+
 ## 2.0.2
 * Fix: travis tests
 

@@ -9767,111 +9767,92 @@ function hasOwnProperty(obj, prop) {
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./support/isBuffer":80,"_process":20,"inherits":79}],82:[function(require,module,exports){
-(function (global){
+var v1 = require('./v1');
+var v4 = require('./v4');
 
-var rng;
+var uuid = v4;
+uuid.v1 = v1;
+uuid.v4 = v4;
 
-var crypto = global.crypto || global.msCrypto; // for IE 11
-if (crypto && crypto.getRandomValues) {
-  // WHATWG crypto-based RNG - http://wiki.whatwg.org/wiki/Crypto
-  // Moderately fast, high quality
-  var _rnds8 = new Uint8Array(16);
-  rng = function whatwgRNG() {
-    crypto.getRandomValues(_rnds8);
-    return _rnds8;
-  };
+module.exports = uuid;
+
+},{"./v1":85,"./v4":86}],83:[function(require,module,exports){
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+var byteToHex = [];
+for (var i = 0; i < 256; ++i) {
+  byteToHex[i] = (i + 0x100).toString(16).substr(1);
 }
 
-if (!rng) {
+function bytesToUuid(buf, offset) {
+  var i = offset || 0;
+  var bth = byteToHex;
+  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
+  return ([bth[buf[i++]], bth[buf[i++]], 
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]]]).join('');
+}
+
+module.exports = bytesToUuid;
+
+},{}],84:[function(require,module,exports){
+// Unique ID creation requires a high quality random # generator.  In the
+// browser this is a little complicated due to unknown quality of Math.random()
+// and inconsistent support for the `crypto` API.  We do the best we can via
+// feature-detection
+
+// getRandomValues needs to be invoked in a context where "this" is a Crypto
+// implementation. Also, find the complete implementation of crypto on IE11.
+var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto)) ||
+                      (typeof(msCrypto) != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto));
+
+if (getRandomValues) {
+  // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
+  var rnds8 = new Uint8Array(16); // eslint-disable-line no-undef
+
+  module.exports = function whatwgRNG() {
+    getRandomValues(rnds8);
+    return rnds8;
+  };
+} else {
   // Math.random()-based (RNG)
   //
   // If all else fails, use Math.random().  It's fast, but is of unspecified
   // quality.
-  var  _rnds = new Array(16);
-  rng = function() {
+  var rnds = new Array(16);
+
+  module.exports = function mathRNG() {
     for (var i = 0, r; i < 16; i++) {
       if ((i & 0x03) === 0) r = Math.random() * 0x100000000;
-      _rnds[i] = r >>> ((i & 0x03) << 3) & 0xff;
+      rnds[i] = r >>> ((i & 0x03) << 3) & 0xff;
     }
 
-    return _rnds;
+    return rnds;
   };
 }
 
-module.exports = rng;
-
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],83:[function(require,module,exports){
-//     uuid.js
-//
-//     Copyright (c) 2010-2012 Robert Kieffer
-//     MIT License - http://opensource.org/licenses/mit-license.php
-
-// Unique ID creation requires a high quality random # generator.  We feature
-// detect to determine the best RNG source, normalizing to a function that
-// returns 128-bits of randomness, since that's what's usually required
-var _rng = require('./rng');
-
-// Maps for number <-> hex string conversion
-var _byteToHex = [];
-var _hexToByte = {};
-for (var i = 0; i < 256; i++) {
-  _byteToHex[i] = (i + 0x100).toString(16).substr(1);
-  _hexToByte[_byteToHex[i]] = i;
-}
-
-// **`parse()` - Parse a UUID into it's component bytes**
-function parse(s, buf, offset) {
-  var i = (buf && offset) || 0, ii = 0;
-
-  buf = buf || [];
-  s.toLowerCase().replace(/[0-9a-f]{2}/g, function(oct) {
-    if (ii < 16) { // Don't overflow!
-      buf[i + ii++] = _hexToByte[oct];
-    }
-  });
-
-  // Zero out remaining bytes if string was short
-  while (ii < 16) {
-    buf[i + ii++] = 0;
-  }
-
-  return buf;
-}
-
-// **`unparse()` - Convert UUID byte array (ala parse()) into a string**
-function unparse(buf, offset) {
-  var i = offset || 0, bth = _byteToHex;
-  return  bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] + '-' +
-          bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]] +
-          bth[buf[i++]] + bth[buf[i++]];
-}
+},{}],85:[function(require,module,exports){
+var rng = require('./lib/rng');
+var bytesToUuid = require('./lib/bytesToUuid');
 
 // **`v1()` - Generate time-based UUID**
 //
 // Inspired by https://github.com/LiosK/UUID.js
 // and http://docs.python.org/library/uuid.html
 
-// random #'s we need to init node and clockseq
-var _seedBytes = _rng();
-
-// Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
-var _nodeId = [
-  _seedBytes[0] | 0x01,
-  _seedBytes[1], _seedBytes[2], _seedBytes[3], _seedBytes[4], _seedBytes[5]
-];
-
-// Per 4.2.2, randomize (14 bit) clockseq
-var _clockseq = (_seedBytes[6] << 8 | _seedBytes[7]) & 0x3fff;
+var _nodeId;
+var _clockseq;
 
 // Previous uuid creation time
-var _lastMSecs = 0, _lastNSecs = 0;
+var _lastMSecs = 0;
+var _lastNSecs = 0;
 
 // See https://github.com/broofa/node-uuid for API details
 function v1(options, buf, offset) {
@@ -9879,8 +9860,26 @@ function v1(options, buf, offset) {
   var b = buf || [];
 
   options = options || {};
-
+  var node = options.node || _nodeId;
   var clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq;
+
+  // node and clockseq need to be initialized to random values if they're not
+  // specified.  We do this lazily to minimize issues related to insufficient
+  // system entropy.  See #189
+  if (node == null || clockseq == null) {
+    var seedBytes = rng();
+    if (node == null) {
+      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+      node = _nodeId = [
+        seedBytes[0] | 0x01,
+        seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]
+      ];
+    }
+    if (clockseq == null) {
+      // Per 4.2.2, randomize (14 bit) clockseq
+      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
+    }
+  }
 
   // UUID timestamps are 100 nano-second units since the Gregorian epoch,
   // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
@@ -9941,28 +9940,29 @@ function v1(options, buf, offset) {
   b[i++] = clockseq & 0xff;
 
   // `node`
-  var node = options.node || _nodeId;
-  for (var n = 0; n < 6; n++) {
+  for (var n = 0; n < 6; ++n) {
     b[i + n] = node[n];
   }
 
-  return buf ? buf : unparse(b);
+  return buf ? buf : bytesToUuid(b);
 }
 
-// **`v4()` - Generate random UUID**
+module.exports = v1;
 
-// See https://github.com/broofa/node-uuid for API details
+},{"./lib/bytesToUuid":83,"./lib/rng":84}],86:[function(require,module,exports){
+var rng = require('./lib/rng');
+var bytesToUuid = require('./lib/bytesToUuid');
+
 function v4(options, buf, offset) {
-  // Deprecated - 'format' argument, as supported in v1.2
   var i = buf && offset || 0;
 
   if (typeof(options) == 'string') {
-    buf = options == 'binary' ? new Array(16) : null;
+    buf = options === 'binary' ? new Array(16) : null;
     options = null;
   }
   options = options || {};
 
-  var rnds = options.random || (options.rng || _rng)();
+  var rnds = options.random || (options.rng || rng)();
 
   // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
   rnds[6] = (rnds[6] & 0x0f) | 0x40;
@@ -9970,24 +9970,17 @@ function v4(options, buf, offset) {
 
   // Copy bytes to buffer, if provided
   if (buf) {
-    for (var ii = 0; ii < 16; ii++) {
+    for (var ii = 0; ii < 16; ++ii) {
       buf[i + ii] = rnds[ii];
     }
   }
 
-  return buf || unparse(rnds);
+  return buf || bytesToUuid(rnds);
 }
 
-// Export public API
-var uuid = v4;
-uuid.v1 = v1;
-uuid.v4 = v4;
-uuid.parse = parse;
-uuid.unparse = unparse;
+module.exports = v4;
 
-module.exports = uuid;
-
-},{"./rng":82}],84:[function(require,module,exports){
+},{"./lib/bytesToUuid":83,"./lib/rng":84}],87:[function(require,module,exports){
 var assert = require('assert')
 
 var util = require('util')
@@ -10081,7 +10074,7 @@ SubscriptionObservable.prototype._onData = function (payload) {
   debug('_onData', payload)
   if (payload.event === 'next') {
     // next
-    this._observer.next({ data: payload.data })
+    this._observer.next(payload.data)
   } else if (payload.event === 'error') {
     // error
     var errors = payload.errors.map(parseErr)
@@ -10115,12 +10108,12 @@ SubscriptionObservable.prototype._onReconnected = function () {
   this._sendSubscription(true)
 }
 
-},{"../shared/subscription-dispose.js":87,"101/bind-all":2,"assert":12,"debug":14,"error-to-json":16,"rxjs/Observable":23,"rxjs/Subscription":30,"util":81}],85:[function(require,module,exports){
+},{"../shared/subscription-dispose.js":90,"101/bind-all":2,"assert":12,"debug":14,"error-to-json":16,"rxjs/Observable":23,"rxjs/Subscription":30,"util":81}],88:[function(require,module,exports){
 module.exports = {
   key: 'primus-graphql'
 }
 
-},{}],86:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 /*
   note: this is a partial script see "make build"
   the build is necessary to keep module.exports functional, but also bundle all dependencies into a single file
@@ -10233,7 +10226,7 @@ function handleData (res) {
   }
 }
 
-},{"./client/subscription-observable.js":84,"./default-primus-opts.js":85,"101/defaults":3,"101/equals":4,"101/is-function":7,"101/not":11,"assert":12,"call-me-maybe":13,"debug":14,"error-to-json":16,"events":17,"observable-backoff":19,"rxjs/add/operator/publish":35,"uuid":83}],87:[function(require,module,exports){
+},{"./client/subscription-observable.js":87,"./default-primus-opts.js":88,"101/defaults":3,"101/equals":4,"101/is-function":7,"101/not":11,"assert":12,"call-me-maybe":13,"debug":14,"error-to-json":16,"events":17,"observable-backoff":19,"rxjs/add/operator/publish":35,"uuid":82}],90:[function(require,module,exports){
 var Subscription = require('rxjs/Subscription').Subscription
 
 /**
@@ -10244,7 +10237,7 @@ Subscription.prototype.dispose = function () {
   return this.unsubscribe()
 }
 
-},{"rxjs/Subscription":30}]},{},[86]);
+},{"rxjs/Subscription":30}]},{},[89]);
 
 };
   return Primus;
