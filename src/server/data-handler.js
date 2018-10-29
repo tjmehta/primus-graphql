@@ -127,9 +127,9 @@ DataHandler.prototype._handleSubscription = function (payload) {
   var self = this
   var callbacks = new SubscribeCallbacks(payload, this._queryExecutor, this._responder)
   return this._queryExecutor.subscribe(payload).then(function (iterator) {
-    const spark = self._spark
+    var spark = self._spark
     // check if spark has disconnected
-    if (!self._spark) {
+    if (!spark) {
       iterator.return()
       return
     }
