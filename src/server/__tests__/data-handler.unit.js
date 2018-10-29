@@ -68,6 +68,24 @@ describe('DataHandler', () => {
           QueryExecutor.prototype.subscribe.mockImplementation(() => ctx.subscribePromise)
         })
 
+        describe('disconnect before subscribe success', () => {
+          it('should unsubscribe', () => {
+            const data = {}
+            data[primusOpts.key] = {
+              id: 'payloadId',
+              query: 'subscription {...}'
+            }
+            const handleDataPromise = ctx.dataHandler.handleData(data)
+            ctx.dataHandler.stopListeningToSpark()
+            const iterator = createAsyncIterator([{data: 1}, {data: 2}, {data: 3}])
+            iterator.return = jest.fn()
+            ctx.subscribePromise.resolve(iterator)
+            return handleDataPromise.then(() => {
+              expect(iterator.return).toHaveBeenCalled()
+            })
+          })
+        })
+
         describe('subscribe success', () => {
           beforeEach(() => {
             ctx.iteratorVals = [{data: 1}, {data: 2}, {data: 3}]
