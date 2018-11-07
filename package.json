@@ -52,7 +52,7 @@
     "browserify": "^14.5.0",
     "chai": "^4.1.2",
     "engine.io": "^3.2.0",
-    "engine.io-client": "^3.2.1",
+    "engine.io-client": "3.2.1",
     "exposed-promise": "^1.0.0",
     "graphql": "^14.0.2",
     "graphql-relay": "^0.5.5",
