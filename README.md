@@ -1,6 +1,6 @@
-# primus-graphql [![Build Status](https://travis-ci.org/tjmehta/primus-graphql.svg?branch=master)](https://travis-ci.org/tjmehta/primus-graphql) [![Coverage Status](https://coveralls.io/repos/github/tjmehta/primus-graphql/badge.svg?branch=master)](https://coveralls.io/github/tjmehta/primus-graphql?branch=master) [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)
-
 ![primus-graphql-logo](https://i.imgur.com/RDn6XT9.png)
+
+# primus-graphql [![Build Status](https://travis-ci.org/tjmehta/primus-graphql.svg?branch=master)](https://travis-ci.org/tjmehta/primus-graphql) [![Coverage Status](https://coveralls.io/repos/github/tjmehta/primus-graphql/badge.svg?branch=master)](https://coveralls.io/github/tjmehta/primus-graphql?branch=master) [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)
 
 Primus-GraphQL is a flexible client and server library that can be used to power realtime [GraphQL](https://github.com/graphql/graphql-js) applications. It is similar to [Express-GraphQL](https://github.com/graphql/express-graphql) but with support for [Relay](https://github.com/facebook/relay) and Subscriptions!
 
