@@ -68,24 +68,6 @@ describe('DataHandler', () => {
           QueryExecutor.prototype.subscribe.mockImplementation(() => ctx.subscribePromise)
         })
 
-        describe('disconnect before subscribe success', () => {
-          it('should unsubscribe', () => {
-            const data = {}
-            data[primusOpts.key] = {
-              id: 'payloadId',
-              query: 'subscription {...}'
-            }
-            const handleDataPromise = ctx.dataHandler.handleData(data)
-            ctx.dataHandler.stopListeningToSpark()
-            const iterator = createAsyncIterator([{data: 1}, {data: 2}, {data: 3}])
-            iterator.return = jest.fn()
-            ctx.subscribePromise.resolve(iterator)
-            return handleDataPromise.then(() => {
-              expect(iterator.return).toHaveBeenCalled()
-            })
-          })
-        })
-
         describe('subscribe success', () => {
           beforeEach(() => {
             ctx.iteratorVals = [{data: 1}, {data: 2}, {data: 3}]
@@ -112,6 +94,44 @@ describe('DataHandler', () => {
             })
           })
 
+          describe('disconnect before subscribe success', () => {
+            it('should not write to socket', () => {
+              const data = {}
+              data[primusOpts.key] = {
+                id: 'payloadId',
+                query: 'subscription {...}'
+              }
+              const handleDataPromise = ctx.dataHandler.handleData(data)
+              ctx.dataHandler.stopListeningToSpark()
+              const iterator = ctx.iterator
+              iterator.return = jest.fn()
+              return handleDataPromise.then(() => {
+                expect(iterator.return).toHaveBeenCalled()
+              })
+            })
+          })
+
+          describe('disconnect before iterator next/completed', () => {
+            it('should not write to socket', () => {
+              const data = {}
+              data[primusOpts.key] = {
+                id: 'payloadId',
+                query: 'subscription {...}'
+              }
+              const handleDataPromise = ctx.dataHandler.handleData(data)
+              return ctx.subscribePromise.then(() => {
+                ctx.dataHandler.stopListeningToSpark()
+                return handleDataPromise.then(() => {
+                  const callbacks = SubscribeCallbacks.mock.instances[0]
+                  expect(callbacks.onError).not.toHaveBeenCalled()
+                  expect(callbacks.onCompleted).not.toHaveBeenCalled()
+                  expect(callbacks.onNext).not.toHaveBeenCalled()
+                  expect(activeIterators.unsubscribeAll).toHaveBeenCalled()
+                })
+              })
+            })
+          })
+
           describe('iterator error', () => {
             beforeEach(() => {
               ctx.err = new Error('boom')
@@ -127,7 +147,27 @@ describe('DataHandler', () => {
               ctx.dataHandler.listenToSpark(ctx.spark)
             })
 
-            it('should handle a subscription that errors', () => {
+            describe('disconnect before iterator error', () => {
+              it('should not write to socket', () => {
+                const data = {}
+                data[primusOpts.key] = {
+                  id: 'payloadId',
+                  query: 'subscription {...}'
+                }
+                const handleDataPromise = ctx.dataHandler.handleData(data)
+                return ctx.subscribePromise.then(() => {
+                  ctx.dataHandler.stopListeningToSpark()
+                  return handleDataPromise.then(() => {
+                    const callbacks = SubscribeCallbacks.mock.instances[0]
+                    expect(callbacks.onError).not.toHaveBeenCalled()
+                    expect(callbacks.onCompleted).not.toHaveBeenCalled()
+                    expect(callbacks.onNext).not.toHaveBeenCalled()
+                  })
+                })
+              })
+            })
+
+            it('should handle an iterator that errors', () => {
               const data = {}
               const payload = data[primusOpts.key] = {
                 id: 'payloadId',
@@ -155,6 +195,24 @@ describe('DataHandler', () => {
             ctx.subscribePromise.reject(ctx.err)
           })
 
+          describe('disconnect before subscription error', () => {
+            it('should not write to socket', () => {
+              const data = {}
+              data[primusOpts.key] = {
+                id: 'payloadId',
+                query: 'subscription {...}'
+              }
+              const handleDataPromise = ctx.dataHandler.handleData(data)
+              ctx.dataHandler.stopListeningToSpark()
+              return handleDataPromise.then(() => {
+                const callbacks = SubscribeCallbacks.mock.instances[0]
+                expect(callbacks.onError).not.toHaveBeenCalled()
+                expect(callbacks.onCompleted).not.toHaveBeenCalled()
+                expect(callbacks.onNext).not.toHaveBeenCalled()
+              })
+            })
+          })
+
           it('should handle a subscription that errors', () => {
             const data = {}
             const payload = data[primusOpts.key] = {
@@ -180,14 +238,14 @@ describe('DataHandler', () => {
 
       describe('query query', () => {
         beforeEach(() => {
-          ctx.subscribePromise = new ExposedPromise()
-          QueryExecutor.prototype.execute.mockImplementation(() => ctx.subscribePromise)
+          ctx.queryPromise = new ExposedPromise()
+          QueryExecutor.prototype.execute.mockImplementation(() => ctx.queryPromise)
         })
 
         describe('query success', () => {
           beforeEach(() => {
             ctx.resPayload = {}
-            ctx.subscribePromise.resolve(ctx.resPayload)
+            ctx.queryPromise.resolve(ctx.resPayload)
           })
 
           it('should handle a query query', () => {
@@ -203,13 +261,31 @@ describe('DataHandler', () => {
               expect(responder.send).toHaveBeenCalledWith(payload.id, 200, ctx.resPayload)
             })
           })
+
+          describe('disconnect before query resolves', () => {
+            it('should unsubscribe', () => {
+              const data = {}
+              const payload = data[primusOpts.key] = {
+                id: 'payloadId',
+                query: 'query {...}'
+              }
+              const handleDataPromise = ctx.dataHandler.handleData(data)
+              ctx.dataHandler.stopListeningToSpark()
+              handleDataPromise.then(() => {
+                const queryExecutor = last(QueryExecutor.mock.instances)
+                expect(queryExecutor.execute).toHaveBeenCalledWith(payload)
+                const responder = Responder.mock.instances[0]
+                expect(responder.send).not.toHaveBeenCalled()
+              })
+            })
+          })
         })
 
         describe('query error', () => {
           beforeEach(() => {
             ctx.err = new Error('boom')
             ctx.err.status = 400
-            ctx.subscribePromise.reject(ctx.err)
+            ctx.queryPromise.reject(ctx.err)
           })
 
           it('should handle a query query', () => {
@@ -227,6 +303,24 @@ describe('DataHandler', () => {
                 ctx.err.status,
                 [ctx.err]
               )
+            })
+          })
+
+          describe('disconnect before query rejects', () => {
+            it('should unsubscribe', () => {
+              const data = {}
+              const payload = data[primusOpts.key] = {
+                id: 'payloadId',
+                query: 'query {...}'
+              }
+              const handleDataPromise = ctx.dataHandler.handleData(data)
+              ctx.dataHandler.stopListeningToSpark()
+              handleDataPromise.then(() => {
+                const queryExecutor = last(QueryExecutor.mock.instances)
+                expect(queryExecutor.execute).toHaveBeenCalledWith(payload)
+                const responder = Responder.mock.instances[0]
+                expect(responder.send).not.toHaveBeenCalled()
+              })
             })
           })
         })

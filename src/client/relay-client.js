@@ -121,7 +121,7 @@ PrimusRelayClient.prototype.subscribe = function (operation, variables, cacheCon
     .refCount()
     .backoff(retryOpts)
     .subscribe(
-      (data) => observer.onNext({ data }),
+      function (data) { return observer.onNext({ data }) },
       observer.onError,
       observer.onCompleted
     )
