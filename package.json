@@ -76,7 +76,7 @@
     "standard": "^10.0.3",
     "throw-next-tick": "^0.1.0",
     "uws": "^8.14.1",
-    "watchify": "^3.11.0"
+    "watchify": "^3.11.1"
   },
   "dependencies": {
     "101": "^1.6.1",
