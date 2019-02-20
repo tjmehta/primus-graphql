@@ -75,7 +75,7 @@
     "shimmer": "^1.2.0",
     "standard": "^10.0.3",
     "throw-next-tick": "^0.1.0",
-    "uws": "^8.14.1",
+    "uws": "^100.0.1",
     "watchify": "^3.11.0"
   },
   "dependencies": {
