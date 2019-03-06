@@ -68,7 +68,7 @@
     "primus": "^7.2.3",
     "react": "^16.8.4",
     "react-addons-test-utils": "^15.6.2",
-    "react-dom": "^16.5.2",
+    "react-dom": "^16.8.4",
     "react-relay": "^1.6.2",
     "relay-compiler": "^1.6.2",
     "rxjs": "^5.5.7",
