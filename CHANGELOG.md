@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.0.6
+* Fix: return correct error status code from server
+* Fix: keep correct status code on client
+* Fix: upgrade observable-backoff
+* Fix: stop subscriptions retries if err.statusCode < 500
+
+## 2.0.5
+* Fix: better spark close handling
+* Fix: misc module updates
+* Fix: update readme
+
+## 2.0.4
+* Fix: iterator creation vs spark close race
+
 ## 2.0.3
 * Fix: backwards compatibility with primus-graphql relay-classic network-layer
 
