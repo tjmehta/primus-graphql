@@ -8,6 +8,7 @@ Object {
   ],
   "message": "multiple errors",
   "name": "Error",
+  "status": 504,
 }
 `;
 

@@ -3,6 +3,14 @@ var debug = require('debug')('primus-graphql:query-executor')
 var isFunction = require('101/is-function')
 var GraphQL = require('graphql')
 
+var getErrorStatus = function (err, defaultStatus) {
+  if (err.status) return err.status
+  if (err.statusCode) return err.statusCode
+  if (err.originalError && err.originalError.status) return err.originalError.status
+  if (err.originalError && err.originalError.statusCode) return err.originalError.statusCode
+  return defaultStatus
+}
+
 var checkForPayloadErrors = function (data) {
   if (data.data instanceof Error) {
     throw data.data
@@ -12,11 +20,11 @@ var checkForPayloadErrors = function (data) {
   if (data.errors) {
     if (data.errors.length === 1) {
       err = data.errors[0]
-      err.status = err.status || 400
+      err.status = err.statusCode = getErrorStatus(err, 400)
     } else {
       err = new Error('multiple errors')
-      const statuses = data.errors.map(function (err) { return err.status || 400 })
-      err.status = Math.max.apply(Math, statuses)
+      const statuses = data.errors.map((err) => getErrorStatus(err, 400))
+      err.status = err.statusCode = Math.max.apply(Math, statuses)
       err.errors = data.errors
     }
     throw err
@@ -72,7 +80,7 @@ QueryExecutor._validateAST = function (documentAST, opts) {
   if (validationErrors.length) {
     debug('_validateAST: errors:', validationErrors)
     var err = new Error('validation error')
-    err.status = 400
+    err.status = err.statusCode = 400
     err.errors = validationErrors
     throw err
   }
@@ -110,8 +118,8 @@ QueryExecutor.prototype.execute = function (payload) {
       try {
         return GraphQL.execute(schema, documentAST, rootValue, context, variables)
       } catch (err) {
-        // Return 400: Bad Request if any execution context errors exist.
-        err.status = 400
+        // This is usually a "400 Bad Request" if any execution context errors exist.
+        err.status = err.statusCode = getErrorStatus(err, 400)
         reject(err)
       }
     }).then(function (data) {

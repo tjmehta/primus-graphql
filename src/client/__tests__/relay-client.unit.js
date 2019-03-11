@@ -62,6 +62,22 @@ describe('PrimusRelayClient', () => {
         })
       })
 
+      describe('graphql client error (unknown)', () => {
+        beforeEach(() => {
+          ctx.primus.graphql.mockImplementation(() => Promise.reject(new Error('network error')))
+        })
+
+        it('should send graphql query', () => {
+          const operation = { text: 'operationText' }
+          const variables = { var1: 'foo', var2: 'bar' }
+          return ctx.relayClient.fetch(operation, variables).then(() => {
+            throw new Error('this should not happen')
+          }).catch((err) => {
+            expect(err).toMatchSnapshot()
+          })
+        })
+      })
+
       describe('graphql non-retryable error (400)', () => {
         beforeEach(() => {
           ctx.payload = {
@@ -190,6 +206,7 @@ describe('PrimusRelayClient', () => {
         ctx.relayClient.subscribe(operation, variables, cacheConfig, ctx.observer)
         // long error w/ no stack for coverage
         const err = new Error('long message')
+        err.status = 500
         delete err.stack
         ctx.observable.error(err)
         setTimeout(() => {
