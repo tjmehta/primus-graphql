@@ -1,5 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`PrimusRelayClient methods fetch graphql client error (unknown) should send graphql query 1`] = `[Error: fetch(): GraphQL client error, tried 2 times. ]`;
+
 exports[`PrimusRelayClient methods fetch graphql non-retryable error (400) should send graphql query 1`] = `[Error: fetch(): Received error response from server, tried 1 times. ]`;
 
 exports[`PrimusRelayClient methods fetch graphql retryable error (500) should send graphql query 1`] = `[Error: fetch(): Received error response from server, tried 2 times. ]`;

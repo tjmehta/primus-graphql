@@ -153,10 +153,11 @@ describe('QueryExecutor', () => {
       })
 
       describe('graphql.execute throws', () => {
-        const err = new Error('boom')
+        let err
         let queryExecutor2
 
         beforeEach(() => {
+          err = new Error('boom')
           jest.doMock('graphql')
           const GraphQL = require('graphql')
           GraphQL.execute.mockImplementation(() => { throw err })
@@ -167,6 +168,7 @@ describe('QueryExecutor', () => {
         })
 
         it('should yield error', () => {
+          err.originalError = { status: 500 }
           const payload = {
             query: 'query UserQuery { user { id } }',
             variables: {}
@@ -175,13 +177,30 @@ describe('QueryExecutor', () => {
             throw new Error('this should not happen')
           }).catch((_err) => {
             expect(_err).toBe(err)
+            expect(_err.status).toBe(500)
+          })
+        })
+
+        it('should yield error status', () => {
+          err.originalError = { statusCode: 504 }
+          const payload = {
+            query: 'query UserQuery { user { id } }',
+            variables: {}
+          }
+          return queryExecutor2.execute(payload).then(() => {
+            throw new Error('this should not happen')
+          }).catch((_err) => {
+            expect(_err).toBe(err)
+            expect(_err.status).toBe(504)
           })
         })
       })
 
       describe('multiple errors', () => {
         const err1 = new Error('boom1')
+        err1.status = 500
         const err2 = new Error('boom2')
+        err2.statusCode = 504
         let queryExecutor2
 
         beforeEach(() => {
@@ -204,6 +223,7 @@ describe('QueryExecutor', () => {
             expect({
               name: err.name,
               message: err.message,
+              status: err2.statusCode, // 504
               errors: err.errors
             }).toMatchSnapshot()
           })

@@ -1,6 +1,5 @@
 var assert = require('assert')
 
-var exists = require('101/exists')
 var defaults = require('101/defaults')
 var put = require('101/put')
 var retry = require('promise-retry')
@@ -64,25 +63,37 @@ PrimusRelayClient.prototype.fetch = function (operation, variables, cacheConfig)
       timeout(opts.timeout).then(function () {
         var errReason = 'fetch(): Request timed out'
         var source = {
-          errors: [new Error('Request timed out')],
-          retryable: true
+          errors: [new Error('Request timed out')]
         }
-        throw self._createErr(errReason, count, source, {
+        var isFinal = count > opts.retry.retries
+        var retryable = !isFinal
+        throw self._createErr(errReason, count, source, retryable, {
           operation,
           variables
         })
       }),
-      primus.graphql(operation.text, variables)
-    ]).catch(retryCb).then(function (payload) {
-      // response payload recieved
-      if (!payload.statusCode || payload.statusCode >= 300 || payload.statusCode < 200) {
-        // error
-        var errReason = 'fetch(): Received error response from server'
-        const err = self._createErr(errReason, count, payload, {
+      primus.graphql(operation.text, variables).catch(err => {
+        var errReason = 'fetch(): GraphQL client error'
+        var source = { errors: [err] }
+        var isFinal = count > opts.retry.retries
+        var retryable = !isFinal
+        throw self._createErr(errReason, count, source, retryable, {
           operation,
           variables
         })
-        if (!payload.statusCode || payload.statusCode >= 500) {
+      })
+    ]).catch(retryCb).then(function (payload) {
+      // response payload recieved
+      if (payload.statusCode == null || payload.statusCode >= 300 || payload.statusCode < 200) {
+        // error
+        var isFinal = count > opts.retry.retries
+        var retryable = !isFinal && (payload.statusCode == null || payload.statusCode >= 500)
+        var errReason = 'fetch(): Received error response from server'
+        var err = self._createErr(errReason, count, payload, retryable, {
+          operation,
+          variables
+        })
+        if (retryable) {
           // retryable
           retryCb(err)
         } else {
@@ -106,12 +117,20 @@ PrimusRelayClient.prototype.fetch = function (operation, variables, cacheConfig)
 PrimusRelayClient.prototype.subscribe = function (operation, variables, cacheConfig, observer) {
   var self = this
   var retryOpts = put(this.opts.retry, {
-    onError: function (_err, isFinal, count) {
+    onError: function (err, isFinal, count) {
       // create and log error
-      self._createErr('subscribe(): Error', count, { errors: [_err], retryable: !isFinal }, {
+      console.log('SUB', isFinal, count, err.status, self.opts.retry)
+      var retryable = !isFinal && (err.status == null || err.status >= 500)
+      var source = { errors: [err] }
+      self._createErr('subscribe(): Error', count, source, retryable, {
         operation,
         variables
       })
+
+      if (!retryable) {
+        // dontRetry
+        return true
+      }
     }
   })
 
@@ -127,10 +146,7 @@ PrimusRelayClient.prototype.subscribe = function (operation, variables, cacheCon
     )
 }
 
-PrimusRelayClient.prototype._createErr = function (reason, count, source, query) {
-  var retryable = exists(source.retryable)
-    ? source.retryable
-    : (!source.statusCode || source.statusCode >= 500)
+PrimusRelayClient.prototype._createErr = function (reason, count, source, retryable, query) {
   var message = [
     reason + ',',
     'tried ' + count + ' times.',
