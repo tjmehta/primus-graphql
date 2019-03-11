@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.7
+* Fix: built files modified in 2.0.6
+
 ## 2.0.6
 * Fix: return correct error status code from server
 * Fix: keep correct status code on client
