@@ -186,6 +186,19 @@ describe('DataHandler', () => {
                 expect(callbacks.onNext).not.toHaveBeenCalled()
               })
             })
+
+            it('should call handleGraphQLError if it exists', () => {
+              const data = {}
+              const payload = data[primusOpts.key] = {
+                id: 'payloadId',
+                query: 'subscription {...}'
+              }
+              const handleGraphQLError = jest.fn()
+              ctx.dataHandler.onGraphQLError(handleGraphQLError)
+              return ctx.dataHandler.handleData(data).then(() => {
+                expect(handleGraphQLError).toHaveBeenCalledWith(ctx.err, payload)
+              })
+            })
           })
         })
 
@@ -321,6 +334,19 @@ describe('DataHandler', () => {
                 const responder = Responder.mock.instances[0]
                 expect(responder.send).not.toHaveBeenCalled()
               })
+            })
+          })
+
+          it('should call handleGraphQLError if it exists', () => {
+            const data = {}
+            const payload = data[primusOpts.key] = {
+              id: 'payloadId',
+              query: 'query {...}'
+            }
+            const handleGraphQLError = jest.fn()
+            ctx.dataHandler.onGraphQLError(handleGraphQLError)
+            return ctx.dataHandler.handleData(data).then(() => {
+              expect(handleGraphQLError).toHaveBeenCalledWith(ctx.err, payload)
             })
           })
         })

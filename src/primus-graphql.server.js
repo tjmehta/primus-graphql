@@ -39,6 +39,9 @@ function createServerPlugin (opts) {
       if (spark.__graphqlDataHandler) return
       debug('attachGraphQLDataHandler: create data handler')
       var dataHandler = new DataHandler(opts, primusOpts)
+      dataHandler.onGraphQLError(function (err, payload) {
+        primus.emit('graphql:error', spark, err, payload)
+      })
       spark.__graphqlDataHandler = dataHandler
       dataHandler.listenToSpark(spark)
     }

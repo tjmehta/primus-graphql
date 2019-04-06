@@ -49,6 +49,7 @@ describe('createServerPlugin', () => {
       ctx.serverPlugin = createServerPlugin(ctx.opts)
       ctx.primus = new EventEmitter()
       ctx.primus.on = jest.fn(ctx.primus.on)
+      ctx.primus.emit = jest.fn(ctx.primus.emit)
       ctx.primus.Spark = function Spark () {}
       ctx.primusOpts = defaults({}, defaultPrimusOpts)
     })
@@ -76,6 +77,12 @@ describe('createServerPlugin', () => {
           expect(DataHandler).toHaveBeenCalledWith(ctx.opts, ctx.primusOpts)
           const dataHandler = DataHandler.mock.instances[0]
           expect(dataHandler.listenToSpark).toHaveBeenCalledWith(ctx.spark)
+          expect(dataHandler.onGraphQLError).toHaveBeenCalledWith(expect.any(Function))
+          const handleGraphQLError = dataHandler.onGraphQLError.mock.calls[0][0]
+          const graphqlErr = new Error('boom')
+          const graphqlPayload = {}
+          handleGraphQLError(graphqlErr, graphqlPayload)
+          expect(ctx.primus.emit).toHaveBeenCalledWith('graphql:error', ctx.spark, graphqlErr, graphqlPayload)
         })
 
         describe('dataHandler attached to spark', () => {
