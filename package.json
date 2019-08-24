@@ -54,7 +54,7 @@
     "engine.io": "^3.2.0",
     "engine.io-client": "^3.2.1",
     "exposed-promise": "^1.0.0",
-    "graphql": "^14.0.2",
+    "graphql": "^14.5.3",
     "graphql-relay": "^0.5.5",
     "graphql-relay-subscription": "^0.2.0",
     "jest": "^23.6.0",
