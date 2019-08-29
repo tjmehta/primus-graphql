@@ -73,7 +73,7 @@
     "relay-compiler": "^1.6.2",
     "rxjs": "^5.5.7",
     "shimmer": "^1.2.0",
-    "standard": "^10.0.3",
+    "standard": "^14.1.0",
     "throw-next-tick": "^0.1.0",
     "uws": "^8.14.1",
     "watchify": "^3.11.0"
