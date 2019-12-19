@@ -80,7 +80,7 @@
   },
   "dependencies": {
     "101": "^1.6.1",
-    "@babel/core": "^7.1.0",
+    "@babel/core": "^7.7.7",
     "call-me-maybe": "^1.0.1",
     "cast-array": "^1.0.1",
     "debug": "^4.1.1",
