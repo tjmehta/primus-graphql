@@ -70,7 +70,7 @@
     "react-addons-test-utils": "^15.6.2",
     "react-dom": "^16.5.2",
     "react-relay": "^1.6.2",
-    "relay-compiler": "^1.6.2",
+    "relay-compiler": "^8.0.0",
     "rxjs": "^5.5.7",
     "shimmer": "^1.2.0",
     "standard": "^10.0.3",
