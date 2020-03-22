@@ -89,7 +89,7 @@
     "observable-backoff": "^2.0.0",
     "promise-retry": "^1.1.1",
     "promised-observable": "^1.0.0",
-    "static-observable": "^1.0.0",
+    "static-observable": "^1.0.4",
     "uuid": "^3.0.1",
     "warning": "^3.0.0"
   },
