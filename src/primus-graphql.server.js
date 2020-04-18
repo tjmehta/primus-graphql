@@ -46,18 +46,27 @@ function PrimusGraphQL(primus, opts, primusOpts) {
   ])
 }
 PrimusGraphQL.prototype.start = function () {
+  debug('start primus graphql')
   this._primus.on('connection', this._handleConnection)
   this._primus.on('disconnection', this._handleDisconnection)
+  debug('start primus graphql: success')
   return Promise.resolve()
 }
 PrimusGraphQL.prototype.stop = function () {
+  debug('stop primus graphql')
   const self = this
   self._primus.removeListener('connection', self._handleConnection)
   self._primus.removeListener('disconnection', self._handleDisconnection)
   const promises = values(self._disconnectPromises).concat(Object.keys(self._dataHandlers).map(function (sparkId) {
     return self._stopListeningToSpark(self._dataHandlers[sparkId], sparkId)
   }))
-  return Promise.all(promises)
+  return Promise.all(promises).then(function (val) {
+    debug('stop primus graphql: success')
+    return val
+  }).catch(function (err) {
+    debug('stop primus graphql: error')
+    throw err
+  })
 }
 PrimusGraphQL.prototype._handleConnection = function (spark) {
   const dataHandler = this._dataHandlers[spark.id] = new DataHandler(this._opts, this._primusOpts)
@@ -69,13 +78,15 @@ PrimusGraphQL.prototype._handleDisconnection = function (spark) {
   this._stopListeningToSpark(dataHandler, spark.id)
 }
 PrimusGraphQL.prototype._stopListeningToSpark = function (dataHandler, sparkId) {
+  debug('stop listening to spark')
   const self = this
-  const promise = this._disconnectPromises[sparkId] = dataHandler.stopListeningToSpark()
+  this._disconnectPromises[sparkId] = this._disconnectPromises[sparkId] || dataHandler.stopListeningToSpark()
     .then(function (val) {
+      debug('stop listening to spark: finally', { val })
       // no catch required, bc uses allSettled
       delete self._dataHandlers[sparkId]
       delete self._disconnectPromises[sparkId]
       return val
     })
-  return promise
+  return this._disconnectPromises[sparkId]
 }
