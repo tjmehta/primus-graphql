@@ -4,6 +4,7 @@ var defaults = require('101/defaults')
 var put = require('101/put')
 var retry = require('promise-retry')
 var warning = require('warning')
+var timeout = require('timeout-then')
 // observable operators: required in primus-graphql.client
 
 var errWarnMessage = function (err) {
@@ -17,12 +18,6 @@ var errWarnMessage = function (err) {
     msg += '___' // 'Error: '.length == 7
   }
   return msg
-}
-
-var timeout = function (time) {
-  return new Promise(function (resolve) {
-    setTimeout(resolve, time)
-  })
 }
 
 module.exports = PrimusRelayClient
@@ -59,8 +54,9 @@ PrimusRelayClient.prototype.fetch = function (operation, variables, cacheConfig)
   // fetch query with retries
   return retry(function (retryCb, count) {
     // race timeout error with graphql request
+    const timer = timeout(opts.timeout)
     return Promise.race([
-      timeout(opts.timeout).then(function () {
+      timer.then(function () {
         var errReason = 'fetch(): Request timed out'
         var source = {
           errors: [new Error('Request timed out')]
@@ -73,6 +69,7 @@ PrimusRelayClient.prototype.fetch = function (operation, variables, cacheConfig)
         })
       }),
       primus.graphql(operation.text, variables).catch(err => {
+        timer.clear()
         var errReason = 'fetch(): GraphQL client error'
         var source = { errors: [err] }
         var isFinal = count > opts.retry.retries
@@ -81,6 +78,9 @@ PrimusRelayClient.prototype.fetch = function (operation, variables, cacheConfig)
           operation,
           variables
         })
+      }).then((val) => {
+        timer.clear()
+        return val
       })
     ]).catch(retryCb).then(function (payload) {
       // response payload recieved
@@ -135,15 +135,32 @@ PrimusRelayClient.prototype.subscribe = function (operation, variables, cacheCon
   })
 
   // subscribe with retries and return rx-subscription (disposable)
-  return this.primus.graphql(operation.text, variables)
-    .publish()
-    .refCount()
-    .backoff(retryOpts)
-    .subscribe(
-      function (data) { return observer.onNext({ data }) },
-      observer.onError,
-      observer.onCompleted
-    )
+  if (observer) {
+    return this.primus.graphql(operation.text, variables)
+      .publish()
+      .refCount()
+      .backoff(retryOpts)
+      .subscribe(
+        function (data) { return observer.onNext({ data }) },
+        observer.onError,
+        observer.onCompleted
+      )
+  }
+  return {
+    subscribe({next, error, complete, start}) {
+      const subscription = self.primus.graphql(operation.text, variables)
+        .publish()
+        .refCount()
+        .backoff(retryOpts)
+        .subscribe(
+          function (data) { return next({ data }) },
+          error,
+          complete
+        )
+      start(subscription)
+      return subscription
+    }
+  }
 }
 
 PrimusRelayClient.prototype._createErr = function (reason, count, source, retryable, query) {
@@ -153,7 +170,7 @@ PrimusRelayClient.prototype._createErr = function (reason, count, source, retrya
     (retryable && count < this.opts.retry.retries + 1) ? ' Retrying...' : ''
   ].join(' ')
   // log errors as warnings
-  warning(false, message)
+  warning(false, message, retryable, query)
   if (source.errors) {
     source.errors.forEach(function (err) {
       warning(false, errWarnMessage(err))

@@ -1,6 +1,6 @@
 /**
  * @flow
- * @relayHash 941f4718b978e40dbf02a9f68f72d02b
+ * @relayHash c2820d5a17649b2870ec71e6d90c3452
  */
 
 /* eslint-disable */
@@ -9,10 +9,10 @@
 
 /*::
 import type { ConcreteRequest } from 'relay-runtime';
-export type UserChangesInput = {
+export type UserChangesInput = {|
   id: string,
   clientSubscriptionId?: ?string,
-};
+|};
 export type UserSubscriptionVariables = {|
   input: UserChangesInput
 |};
@@ -63,8 +63,7 @@ v1 = [
       {
         "kind": "Variable",
         "name": "input",
-        "variableName": "input",
-        "type": "UserChangesInput!"
+        "variableName": "input"
       }
     ],
     "concreteType": "UserChangesPayload",
@@ -100,27 +99,30 @@ v1 = [
 ];
 return {
   "kind": "Request",
-  "operationKind": "subscription",
-  "name": "UserSubscription",
-  "id": null,
-  "text": "subscription UserSubscription(\n  $input: UserChangesInput!\n) {\n  userChanges(input: $input) {\n    user {\n      id\n      name\n    }\n  }\n}\n",
-  "metadata": {},
   "fragment": {
     "kind": "Fragment",
     "name": "UserSubscription",
     "type": "Subscription",
     "metadata": null,
-    "argumentDefinitions": v0,
-    "selections": v1
+    "argumentDefinitions": (v0/*: any*/),
+    "selections": (v1/*: any*/)
   },
   "operation": {
     "kind": "Operation",
     "name": "UserSubscription",
-    "argumentDefinitions": v0,
-    "selections": v1
+    "argumentDefinitions": (v0/*: any*/),
+    "selections": (v1/*: any*/)
+  },
+  "params": {
+    "operationKind": "subscription",
+    "name": "UserSubscription",
+    "id": null,
+    "text": "subscription UserSubscription(\n  $input: UserChangesInput!\n) {\n  userChanges(input: $input) {\n    user {\n      id\n      name\n    }\n  }\n}\n",
+    "metadata": {}
   }
 };
 })();
 // prettier-ignore
 (node/*: any*/).hash = 'a44fd60c02db3727737846630996e5e1';
+
 module.exports = node;
