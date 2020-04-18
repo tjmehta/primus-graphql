@@ -27,8 +27,9 @@ function DataHandler (opts, primusOpts) {
   // bind data handler
   bindAll(this, [
     'handleData',
+    '_handleEvent',
     'handleClose',
-    '_handleSubscriptionError'
+    '_handleSubscription',
   ])
 }
 
@@ -95,7 +96,7 @@ DataHandler.prototype._handleEvent = function (payload) {
   debug('_handleEvent:', payload)
   if (payload.event === 'unsubscribe') {
     debug('unsubscribe event', payload.id)
-    activeIterators.unsubscribe(this._spark.id, payload.id)
+    this._activeIterators.unsubscribe(this._spark.id, payload.id)
   } else {
     debug('invalid event payload', payload)
   }
@@ -141,10 +142,10 @@ DataHandler.prototype._handleSubscription = function (payload) {
   var promise = this._activePromises[promiseId] = this._queryExecutor.subscribe(payload)
     .then(function (iterator) {
       // check if spark has disconnected
-      this._activePromises[promiseId] = promise
-      activeIterators.add(self._spark.id, payload.id, iterator)
+      self._activePromises[promiseId] = promise
+      self._activeIterators.add(self._spark.id, payload.id, iterator)
       if (!self._spark) {
-        activeIterators.remove(self._spark.id, payload.id, iterator)
+        self._activeIterators.remove(self._spark.id, payload.id, iterator)
         iterator.return()
         return
       }
@@ -157,14 +158,14 @@ DataHandler.prototype._handleSubscription = function (payload) {
       }).then(function () {
         // iterator: completed
         // check if spark has disconnected
-        activeIterators.remove(self._spark.id, payload.id)
+        self._activeIterators.remove(self._spark.id, payload.id)
         if (!self._spark) return
         callbacks.onCompleted()
       })
     }).catch(function (err) {
       // error: subscribe or iterator
       self._activePromises[promiseId] = promise
-      activeIterators.remove(self._spark.id, payload.id)
+      self._activeIterators.remove(self._spark.id, payload.id)
       if (!self._spark) return
       callbacks.onError(err)
     })
