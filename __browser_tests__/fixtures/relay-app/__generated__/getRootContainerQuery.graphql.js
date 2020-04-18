@@ -1,6 +1,6 @@
 /**
  * @flow
- * @relayHash 3578cafa8f36e0ad83fd94d7cbf6a81e
+ * @relayHash 24175dfa930d189228cb4c12224b3c6a
  */
 
 /* eslint-disable */
@@ -35,15 +35,15 @@ query getRootContainerQuery(
   }
 }
 
+fragment UpdateUserMutation_user on User {
+  id
+}
+
 fragment UserContainer_user on User {
   id
   name
   ...UpdateUserMutation_user
   ...UserSubscription_user
-}
-
-fragment UpdateUserMutation_user on User {
-  id
 }
 
 fragment UserSubscription_user on User {
@@ -64,30 +64,24 @@ v1 = [
   {
     "kind": "Variable",
     "name": "id",
-    "variableName": "userId",
-    "type": "String"
+    "variableName": "userId"
   }
 ];
 return {
   "kind": "Request",
-  "operationKind": "query",
-  "name": "getRootContainerQuery",
-  "id": null,
-  "text": "query getRootContainerQuery(\n  $userId: String\n) {\n  user(id: $userId) {\n    ...UserContainer_user\n    id\n  }\n}\n\nfragment UserContainer_user on User {\n  id\n  name\n  ...UpdateUserMutation_user\n  ...UserSubscription_user\n}\n\nfragment UpdateUserMutation_user on User {\n  id\n}\n\nfragment UserSubscription_user on User {\n  id\n}\n",
-  "metadata": {},
   "fragment": {
     "kind": "Fragment",
     "name": "getRootContainerQuery",
     "type": "Query",
     "metadata": null,
-    "argumentDefinitions": v0,
+    "argumentDefinitions": (v0/*: any*/),
     "selections": [
       {
         "kind": "LinkedField",
         "alias": null,
         "name": "user",
         "storageKey": null,
-        "args": v1,
+        "args": (v1/*: any*/),
         "concreteType": "User",
         "plural": false,
         "selections": [
@@ -103,14 +97,14 @@ return {
   "operation": {
     "kind": "Operation",
     "name": "getRootContainerQuery",
-    "argumentDefinitions": v0,
+    "argumentDefinitions": (v0/*: any*/),
     "selections": [
       {
         "kind": "LinkedField",
         "alias": null,
         "name": "user",
         "storageKey": null,
-        "args": v1,
+        "args": (v1/*: any*/),
         "concreteType": "User",
         "plural": false,
         "selections": [
@@ -131,9 +125,17 @@ return {
         ]
       }
     ]
+  },
+  "params": {
+    "operationKind": "query",
+    "name": "getRootContainerQuery",
+    "id": null,
+    "text": "query getRootContainerQuery(\n  $userId: String\n) {\n  user(id: $userId) {\n    ...UserContainer_user\n    id\n  }\n}\n\nfragment UpdateUserMutation_user on User {\n  id\n}\n\nfragment UserContainer_user on User {\n  id\n  name\n  ...UpdateUserMutation_user\n  ...UserSubscription_user\n}\n\nfragment UserSubscription_user on User {\n  id\n}\n",
+    "metadata": {}
   }
 };
 })();
 // prettier-ignore
 (node/*: any*/).hash = '8a87e7f166e4de0c337caaec5fb73ab4';
+
 module.exports = node;

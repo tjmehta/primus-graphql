@@ -1,6 +1,6 @@
 /**
  * @flow
- * @relayHash 932e73263fced7b11cdee21a62483c64
+ * @relayHash eb58b85d45c944165075ab3ffe0bcd21
  */
 
 /* eslint-disable */
@@ -9,11 +9,11 @@
 
 /*::
 import type { ConcreteRequest } from 'relay-runtime';
-export type UpdateUserInput = {
+export type UpdateUserInput = {|
   id: string,
   name?: ?string,
   clientMutationId?: ?string,
-};
+|};
 export type UpdateUserMutationVariables = {|
   input: UpdateUserInput
 |};
@@ -64,8 +64,7 @@ v1 = [
       {
         "kind": "Variable",
         "name": "input",
-        "variableName": "input",
-        "type": "UpdateUserInput!"
+        "variableName": "input"
       }
     ],
     "concreteType": "UpdateUserPayload",
@@ -101,27 +100,30 @@ v1 = [
 ];
 return {
   "kind": "Request",
-  "operationKind": "mutation",
-  "name": "UpdateUserMutation",
-  "id": null,
-  "text": "mutation UpdateUserMutation(\n  $input: UpdateUserInput!\n) {\n  updateUser(input: $input) {\n    user {\n      id\n      name\n    }\n  }\n}\n",
-  "metadata": {},
   "fragment": {
     "kind": "Fragment",
     "name": "UpdateUserMutation",
     "type": "Mutation",
     "metadata": null,
-    "argumentDefinitions": v0,
-    "selections": v1
+    "argumentDefinitions": (v0/*: any*/),
+    "selections": (v1/*: any*/)
   },
   "operation": {
     "kind": "Operation",
     "name": "UpdateUserMutation",
-    "argumentDefinitions": v0,
-    "selections": v1
+    "argumentDefinitions": (v0/*: any*/),
+    "selections": (v1/*: any*/)
+  },
+  "params": {
+    "operationKind": "mutation",
+    "name": "UpdateUserMutation",
+    "id": null,
+    "text": "mutation UpdateUserMutation(\n  $input: UpdateUserInput!\n) {\n  updateUser(input: $input) {\n    user {\n      id\n      name\n    }\n  }\n}\n",
+    "metadata": {}
   }
 };
 })();
 // prettier-ignore
 (node/*: any*/).hash = 'a13c16598355408b91ea8b166f5f6756';
+
 module.exports = node;
