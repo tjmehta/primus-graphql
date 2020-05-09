@@ -87,7 +87,11 @@ primus.graphql = function (query, vars, files, operationName, cb) {
     }
     // Response promise
     promise = new Promise(function (resolve, reject) {
-      resEE.once(payload.id, resolve)
+      function handle() {
+        resEE.off(payload.id, handle)
+        resolve()
+      }
+      resEE.on(payload.id, handle)
     })
     return maybe(cb, promise)
   }
