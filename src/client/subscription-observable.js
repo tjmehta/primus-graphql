@@ -46,7 +46,7 @@ SubscriptionObservable.prototype.__subscribe = function (observer) {
   return new Subscription(function () {
     // unsubscribe
     debug('unsubscribe')
-    self._resEE.removeListener(self._id, self._onData)
+    self._resEE.off(self._id, self._onData)
     self._primus.removeListener('reconnected', self._onReconnected)
     self._sendUnsubscribe()
   })
