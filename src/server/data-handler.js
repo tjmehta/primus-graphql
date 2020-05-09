@@ -50,6 +50,7 @@ DataHandler.prototype.listenToSpark = function (spark) {
 
 DataHandler.prototype.stopListeningToSpark = function () {
   if (!this._spark) return Promise.resolve()
+  this._spark = null
   const promise = allSettled(values(this._activePromises))
   this._activeIterators.unsubscribeAll()
   return promise

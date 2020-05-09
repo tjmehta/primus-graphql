@@ -3,8 +3,7 @@
   the build is necessary to keep module.exports functional, but also bundle all dependencies into a single file
 */
 
-var assert = require('assert')
-var EventEmitter = require('events').EventEmitter
+var Emitter = require('mitt')
 
 var debug = require('debug')('primus-graphql:client')
 var defaults = require('101/defaults')
@@ -13,7 +12,7 @@ var isFunction = require('101/is-function')
 var maybe = require('call-me-maybe')
 var not = require('101/not')
 var parseErr = require('error-to-json').parse
-var uuid = require('uuid')
+var uuid = require('uuid/v4')
 
 var defaultPrimusOpts = require('./default-primus-opts.js')
 var SubscriptionObservable = require('./client/subscription-observable.js')
@@ -22,7 +21,7 @@ require('rxjs/add/operator/publish')
 require('observable-backoff')
 
 var notEquals = not(equals)
-var resEE = new EventEmitter()
+var resEE = new Emitter()
 
 /* istanbul ignore next */
 primusOpts = primusOpts || {}
@@ -57,7 +56,7 @@ primus.graphql = function (query, vars, files, operationName, cb) {
   var queryOperation = query.slice(0, end)
   // create payload
   var payload = {}
-  payload.id = uuid.v4()
+  payload.id = uuid()
   payload.query = query
   payload.variables = vars
   payload.operationName = operationName
@@ -73,7 +72,7 @@ primus.graphql = function (query, vars, files, operationName, cb) {
   data[key] = payload
   if (queryOperation === 'subscription') {
     // subscription returns an observable
-    assert(!cb, 'cannot use callbacks for subscriptions (returns an observable)')
+    if (cb) throw new Error('cannot use callbacks for subscriptions (returns an observable)')
     return this._observeGraphQL(data)
   } else {
     // query, mutation, or malformatted
