@@ -43,9 +43,14 @@
   },
   "homepage": "https://github.com/tjmehta/primus-graphql",
   "devDependencies": {
+    "@babel/preset-env": "^7.10.2",
+    "@babel/preset-typescript": "^7.10.1",
+    "@types/jest": "^25.2.3",
     "@types/relay-runtime": "^8.0.7",
     "aliasify": "^2.1.0",
     "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-jest": "^26.0.1",
     "babel-plugin-relay": "^9.0.0",
     "babel-polyfill": "^6.26.0",
     "babel-preset-es2015": "^6.24.1",
@@ -68,6 +73,7 @@
     "listen-all": "^1.0.1",
     "mocha": "^4.0.1",
     "object-loops": "^0.7.0",
+    "prettier": "^2.0.5",
     "primus": "^7.2.3",
     "react": "^16.5.2",
     "react-addons-test-utils": "^15.6.2",
@@ -79,6 +85,7 @@
     "shimmer": "^1.2.0",
     "standard": "^10.0.3",
     "throw-next-tick": "^0.1.0",
+    "typescript": "^3.9.5",
     "uws": "^8.14.1",
     "watchify": "^3.11.0"
   },
@@ -127,7 +134,7 @@
   },
   "aliasify": {
     "aliases": {
-        "debug": "./src/client/debug-lite.js"
+      "debug": "./src/client/debug-lite.js"
     }
   }
 }
