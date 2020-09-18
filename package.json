@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "make build",
-    "test": "npm run test-unit && npm run test-browser",
+    "test": "npm run test-unit",
     "test-unit": "jest --coverage src",
     "test-unit-watch": "jest --coverage --watch src",
     "test-browser": "make build-browser && karma start __browser_tests__/karmaconf.js",

@@ -9,6 +9,9 @@ const defaultOpts = require('../../default-opts')
 const EventIterator = require('./__fixtures__/ee-iterator')
 const primusOpts = require('../../default-primus-opts')
 const QueryExecutor = require('../query-executor')
+const GraphQL = require('graphql')
+
+const GraphQLError = GraphQL.GraphQLError
 
 // mock setup
 jest.unmock('../query-executor')
@@ -119,8 +122,9 @@ describe('QueryExecutor', () => {
             console.log(data)
             throw new Error('this should not happen')
           }).catch((gqlErr) => {
+            expect(gqlErr).toBe(err)
             expect(gqlErr.message).toEqual(err.message)
-            expect(gqlErr.name).toEqual('GraphQLError')
+            // expect(gqlErr.name).toEqual('GraphQLError')
           })
         })
       })
@@ -168,7 +172,7 @@ describe('QueryExecutor', () => {
         })
 
         it('should yield error', () => {
-          err.originalError = { status: 500 }
+          err.originalError = Object.assign(new GraphQLError('baboom'), { status: 500 })
           const payload = {
             query: 'query UserQuery { user { id } }',
             variables: {}
@@ -176,13 +180,14 @@ describe('QueryExecutor', () => {
           return queryExecutor2.execute(payload).then(() => {
             throw new Error('this should not happen')
           }).catch((_err) => {
+
             expect(_err).toBe(err)
             expect(_err.status).toBe(500)
           })
         })
 
         it('should yield error status', () => {
-          err.originalError = { statusCode: 504 }
+          err.originalError = Object.assign(new GraphQLError('baboom'), { status: 504 })
           const payload = {
             query: 'query UserQuery { user { id } }',
             variables: {}
@@ -301,8 +306,9 @@ describe('QueryExecutor', () => {
           return queryExecutor2.subscribe(payload).then((data) => {
             throw new Error('this should not happen')
           }).catch((gqlErr) => {
+            expect(gqlErr).toBe(err)
             expect(gqlErr.message).toEqual(err.message)
-            expect(gqlErr.name).toEqual('GraphQLError')
+            // expect(gqlErr.name).toEqual('GraphQLError')
           })
         })
       })
