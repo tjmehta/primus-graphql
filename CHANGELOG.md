@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.0.0
+* Major: unwrap GraphQLErrors rejected from execute or subscribe
+
 ## 2.0.7
 * Fix: built files modified in 2.0.6
 
